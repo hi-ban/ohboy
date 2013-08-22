@@ -1,0 +1,168 @@
+OhBoy 1.x.x 2009 Copyright (C) UBYTE
+ubyte.cwb@googlemail.com 
+www.clockworkbytes.com (coming soon)
+
+
+ABOUT
+
+OhBoy is a Game-Boy/Game-Boy Color Emulator. Currently binaries are 
+available for the GP2X Wiz. GP2X(F-xxx) and Pandora Support is planned. 
+
+It is based on gnu-boy 1.0.3. The core sources have not been modified in
+anyway but rather OhBoy provides a graphical front-end and GP2x-centric
+back-end tailored for portable gaming.
+
+OhBoy is currently beta software and has been somewhat rushed (along
+with these docs) in time for Christmas but I hope you enjoy.
+
+
+INSTALLATION
+
+-GP2X WIZ
+Extract all files and folders included in the archive onto your device.
+No extra support files are required. The 'ohboy.gpe' script launches
+the software and returns to the menu upon quitting. 'ohboy' is the
+main executable.
+
+
+USAGE
+
+GP2X UP/DOWN/LEFT/RIGHT: Gameboy D-Pad + Menu Navigation
+GP2X START/MENU/HOME:    Gameboy 'Start' Button
+GP2X SELECT:             Gameboy 'Select' Button
+GP2X B:                  Gameboy 'A' button + Menu 'Select/OK' button
+GP2X X:                  Gameboy 'B' button + Menu 'Back/Cancel' button
+GP2X Y:                  Menu button (brings up the menu while playing a ROM)
+
+
+LAUNCHER
+
+-Load ROM
+	Load and run a *.gb, *.gbc or *.zip ROM file.
+-Options
+	Brings up the global options editor. See OPTIONS for usage.
+-Quit
+	Exits the software.
+
+MENU
+
+-Back to Game
+	Simply returns back to the game. Alternatively press the Back/Cancel button.
+-Load ROM
+	Load and run a *.gb, *.gbc or *.zip ROM file. To exit the ROM navigator 
+	without loading a ROM press the Back/Cancel button. Press Select/OK to load
+	the selected ROM.
+-Load/Save State
+	Load or save the current game state int a slot (up to 8 for any one game.)
+	A save-state allows you to save the state of a game as-is for recall later.
+	Save-states differ from a games usual save methods in that you can save or
+	load at any time.
+-Options
+	See 'OPTIONS' for more info.
+-Quit
+	Quit the software. Recommended before switching off the device directly
+	as any carts internal memory is saved at this point.
+
+OPTIONS
+	OhBoy's options are currently relatively basic. More reconfigurability is planned
+	for future releases. Currently options are saved globally but I hope to
+	include per-game support in the next major release.
+-Mono Palette
+	For non-color games, a selection of palettes.
+-Color Filter
+	Emulates the washed-out look of the Gameboy-color screens. Set to:
+	-Off (no filtering)
+	-On (Gameboy & Gameboy Color games are filtered)
+	-GBC Only (Only Gameboy Color games are filtered)
+-Upscaler
+	Quality over quantity for this release :).
+	-Sample1.5x:             Scales the display to 150% using grid-based
+	                         pixel average up-sampling. (Quite fast.)
+							 
+	-Scale3x + Sample.75%:   Scales the display internally using the
+	                         Scale3x algorithm which is a pixel-expansion
+							 algorithm which enhances the look of the
+							 original graphics. The result is down-sampled
+							 using pixel averaging. (Not quite-so fast I
+							 recommend upping the clock speed and/or 
+							 frame-skip).
+-Frameskip
+	Some games will struggle to run at full-speed on the default/lower 
+	clock speeds. Using frame skip will render every-other frame to allow
+	the logic and sound emulation to run real-time at the cost of lower 
+	FPS.
+	- Auto: Will automatically skip frames if the game starts struggling.
+	- Off:  Turns frame-skip off.
+	- 1-4:  Fixed frame skip. Skips frames at regular intervals.
+-Clock Speed
+	The clock speed can be increased to increase performance of games that
+	require greater-than typical processing power. This is at the cost
+	of battery life. Frame-skip can be used as an alternative.
+-ROM Path
+	Sets the default path to search when loading ROMs.
+-Apply
+	Applies the above settings without saving (will be lost when quitting the
+	emulator.)
+-Save
+	Applies the settings and saves them. When you next run OhBoy these settings
+	will be automatically loaded. OhBoy does not currently support per-game
+	saves.
+
+
+CREDITS
+
+Laguna and Gilgamesh
+	gnuboy 1.0.3
+
+narrowhouse
+	FreeUniversal.ttf font. Licenced under the Open Font Licence.
+
+
+THANKS
+
+To all the talented devs at GP32X.com
+	for all your insightful posts that eased me into deving for the GP2x Wiz.
+
+chickendung at the GP32X.com forums.
+	for believing. :)
+
+	
+CHANGES
+
+1.0.0-beta 1 (21st December 2009)
+	Initial public release.
+
+	
+LICENCE
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+
+DISCLAIMER
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+POSSIBILITY OF SUCH DAMAGE. 
+
+Gameboy and Gameboy Color are registered trademarks of Nintendo
+

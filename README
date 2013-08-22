@@ -2,6 +2,7 @@ This is an unofficial build. The changes over the official source are:
 
 (2013-08-22)
 - GCW Zero version now uses hardware double buffering. Fixed flickering when using double buffering.
+- Updated 1.5x and fullscreen scalers(Paul Cercueil).
 
 (2013-08-12)
 - Enabled scroll looping when menu list is smaller than the screen (previously it was only enabled then the list was bigger than the screen).

@@ -499,10 +499,10 @@ int dialog_end(){
 
 			dialog_drawdirty(&dirty);
 			dirty.update = gui_update();
-			#if defined(GCWZERO)
+			#if defined(DINGOO_OPENDINGUX)
 			dialog_drawdirty(&dirty);         /*Fix for flickering menu when using double buffer*/
 			dirty.update = gui_update();      /*Paints the menu 2 times to prevent flickering*/
-			#endif /*GCWZERO*/
+			#endif /*DINGOO_OPENDINGUX*/
 		}
 
 		gui_sleep(50000);

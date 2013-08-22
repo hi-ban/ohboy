@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <signal.h>
 #include <unistd.h>  /* for getcwd() */
@@ -35,6 +36,14 @@
 #include "loader.h"
 #include "gui_sdl.h"
 #include "menu.h"
+
+#ifdef __GNUC__
+#       define unlikely(x)     __builtin_expect((x),0)
+#       define prefetch(x, y)  __builtin_prefetch((x),(y))
+#else
+#       define unlikely(x)     (x)
+#   define prefetch(x, y)
+#endif
 
 void ohb_loadrom(char *rom);
 
@@ -279,11 +288,11 @@ void vid_init() {
 		bordersf = NULL;}
 	else if (bmpenabled == 1){
 		bordersf = SDL_LoadBMP(border);
-		#if defined(GCWZERO)
+		#if defined(DINGOO_OPENDINGUX)
 		if (bordersf == NULL){                 /*Fix for flickering screen when borders are set to On but no border is loaded, and double buffer is used*/
 			bordersf = SDL_LoadBMP("etc"DIRSEP"black.bmp");
 		}
-		#endif /*GCWZERO*/
+		#endif /*DINGOO_OPENDINGUX*/
 	}
 }
 
@@ -508,188 +517,184 @@ void ohb_scale3x(){
 #endif
 
 /****************************************************************/
-/*
-**  Ayla (Paul Cercueil) scaler code
-**  Needs GCC (__builtin_prefetch dependency)
-**  Known to work in little endian (for instance x86 and Dingoo A320 MIPS)
-**  This is a fast fullscreen 160x144 -> 320x240 (it does not preserve aspect ratio).
-**  Contrary to the pointer types in the function api signature,
-**  it expects framebuffer pixels to be 16bit. Under MIPS 32 bit access is faster :-)
-**  NOTE expects RGB565 for both source and dest.
-*/
-
-
 /* Upscale from 160x144 to 320x240 */
-void gb_upscale(uint32_t *to, uint32_t *from) {
-    uint32_t reg1, reg2, reg3, reg4;
-    unsigned int x,y;
-
-    /* Little explanation:
-     * we transform three lines of pixels into five lines.
-     * Each line has twice the number of pixels.
-     * So each turn, we read two pixels (2 * 16-bit pixel) from the upper line,
-     * two from the middle line, and two from the bottom line.
-     * Each pixel from those lines will be doubled and added to the first, third or fifth
-     * line on the output.
-     * The pixels composing lines two and four will be calculated as the average between
-     * the pixels above them and the pixels under them.
-     * Easy isn't it?
-     */
-
-    for (y=0; y < 240/5; y++) {
-        for(x=0; x < 320/4; x++) {
-            __builtin_prefetch(to+4, 1);
-
-            reg2 = *from;
-
-            // first pixel, upper line => reg1
-            reg1 = reg2 & 0xffff0000;
-            reg1 |= reg1 >> 16;
-            *(to+1) = reg1;
-
-            // second pixel, upper line => reg2
-            reg2 = reg2 & 0xffff;
-            reg2 |= reg2 << 16;
-            *to = reg2;
-
-            reg4 = *(from + 160/2);
-
-            // first pixel, middle line => reg3
-            reg3 = reg4 & 0xffff0000;
-            reg3 |= reg3 >> 16;
-            *(to + 2*320/2 +1) = reg3;
-
-            // second pixel, middle line => reg4
-            reg4 = reg4 & 0xffff;
-            reg4 |= reg4 << 16;
-            *(to + 2*320/2) = reg4;
-
-            // We calculate the first pixel of the 2nd output line.
-                        if (reg1 == reg3)
-                                *(to + 320/2 +1) = reg1;
-                        else
-                                *(to + 320/2 +1) = ((reg1 & 0xf7def7de) >> 1)
-                                  + ((reg3 & 0xf7def7de) >> 1);
-
-            // We calculate the second pixel of the 2nd output line.
-                        if (reg2 == reg4)
-                                *(to + 320/2) = reg2;
-                        else
-                                *(to + 320/2) = ((reg2 & 0xf7def7de) >> 1)
-                                  + ((reg4 & 0xf7def7de) >> 1);
-
-            reg2 = *(from++ + 2*160/2);
-
-            // first pixel, bottom line => reg1
-            reg1 = reg2 & 0xffff0000;
-            reg1 |= reg1 >> 16;
-            *(to + 4*320/2 +1) = reg1;
-
-            // second pixel, bottom line => reg2
-            reg2 = reg2 & 0xffff;
-            reg2 |= reg2 << 16;
-            *(to + 4*320/2) = reg2;
-
-            // We calculate the two pixels of the 4th line.
-                        if (reg2 == reg4)
-                                *(to++ + 3*320/2) = reg2;
-                        else
-                                *(to++ + 3*320/2) = ((reg2 & 0xf7def7de) >> 1)
-                                  + ((reg4 & 0xf7def7de) >> 1);
-
-                        if (reg1 == reg3)
-                                *(to++ + 3*320/2) = reg1;
-                        else
-                                *(to++ + 3*320/2) = ((reg1 & 0xf7def7de) >> 1)
-                                  + ((reg3 & 0xf7def7de) >> 1);
+void gb_upscale(uint32_t *to, uint32_t *from)
+{
+        uint32_t reg1, reg2, reg3, reg4;
+        unsigned int x,y;
+ 
+        /* Before:
+         *    a b
+         *    c d
+         *    e f
+         *
+         * After (parenthesis = average):
+         *    a      a      b      b
+         *    (a,c)  (a,c)  (b,d)  (b,d)
+         *    c      c      d      d
+         *    (c,e)  (c,e)  (d,f)  (d,f)
+         *    e      e      f      f
+         */
+ 
+        for (y=0; y < 240/5; y++) {
+                for(x=0; x < 320/4; x++) {
+                        prefetch(to+4, 1);
+ 
+                        /* Read b-a */
+                        reg2 = *from;
+                        reg1 = reg2 & 0xffff0000;
+                        reg1 |= reg1 >> 16;
+ 
+                        /* Write b-b */
+                        *(to+1) = reg1;
+                        reg2 = reg2 & 0xffff;
+                        reg2 |= reg2 << 16;
+ 
+                        /* Write a-a */
+                        *to = reg2;
+ 
+                        /* Read d-c */
+                        reg4 = *(from + 160/2);
+                        reg3 = reg4 & 0xffff0000;
+                        reg3 |= reg3 >> 16;
+ 
+                        /* Write d-d */
+                        *(to + 2*320/2 +1) = reg3;
+                        reg4 = reg4 & 0xffff;
+                        reg4 |= reg4 << 16;
+ 
+                        /* Write c-c */
+                        *(to + 2*320/2) = reg4;
+ 
+                        /* Write (b,d)-(b,d) */
+                        if (unlikely(reg1 != reg3))
+                                reg1 = ((reg1 & 0xf7def7de) >> 1) + ((reg3 & 0xf7def7de) >> 1);
+                        *(to + 320/2 +1) = reg1;
+ 
+                        /* Write (a,c)-(a,c) */
+                        if (unlikely(reg2 != reg4))
+                                reg2 = ((reg2 & 0xf7def7de) >> 1) + ((reg4 & 0xf7def7de) >> 1);
+                        *(to + 320/2) = reg2;
+ 
+                        /* Read f-e */
+                        reg2 = *(from++ + 2*160/2);
+                        reg1 = reg2 & 0xffff0000;
+                        reg1 |= reg1 >> 16;
+ 
+                        /* Write f-f */
+                        *(to + 4*320/2 +1) = reg1;
+                        reg2 = reg2 & 0xffff;
+                        reg2 |= reg2 << 16;
+ 
+                        /* Write e-e */
+                        *(to + 4*320/2) = reg2;
+ 
+                        /* Write (d,f)-(d,f) */
+                        if (unlikely(reg2 != reg4))
+                                reg2 = ((reg2 & 0xf7def7de) >> 1) + ((reg4 & 0xf7def7de) >> 1);
+                        *(to++ + 3*320/2) = reg2;
+ 
+                        /* Write (c,e)-(c,e) */
+                        if (unlikely(reg1 != reg3))
+                                reg1 = ((reg1 & 0xf7def7de) >> 1) + ((reg3 & 0xf7def7de) >> 1);
+                        *(to++ + 3*320/2) = reg1;
+                }
+ 
+                to += 4*320/2;
+                from += 2*160/2;
         }
-        to += 4*320/2;
-        from += 2*160/2;
-    }
 }
-/****************************************************************/
-
-/*Ayla's 1.5x Upscaler - 160x144 to 240x216 */
-	/* Before:
-	 *    a b c d
-	 *    e f g h
-	 *
-	 * After (parenthesis = average):
-	 *    a      (a,b)      b      c      (c,d)      d
-	 *    (a,e)  (a,b,e,f)  (b,f)  (c,g)  (c,d,g,h)  (d,h)
-	 *    e      (e,f)      f      g      (g,h)      h
-	 */
-void ayla_scale15x(uint32_t *to, uint32_t *from){
-	uint32_t reg1, reg2, reg3, reg4, reg5;
-	size_t x, y;
-
-	for (y=0; y<216/3; y++) {
-		for (x=0; x<240/6; x++) {
-			__builtin_prefetch(to+4, 1);
-
-			// Read b-a
-			reg1 = *from;
-			reg5 = reg1 >> 16;
-			reg2 = (reg1 & 0xf7de0000) >> 1;
-			reg1 &= 0xffff;
-			reg1 |= reg2 + ((reg1 & 0xf7de) << 15);
-
-			// Write (a,b)-a
-			*to = reg1;
-			reg1 = (reg1 & 0xf7def7de) >> 1;
-
-			// Read f-e
-			reg3 = *(from++ + 160/2);
-			reg2 = reg3 >> 16;
-			reg4 = (reg3 & 0xf7de0000) >> 1;
-			reg3 &= 0xffff;
-			reg3 |= reg4 + ((reg3 & 0xf7de) << 15);
-
-			// Write (e,f)-e
-			*(to + 2*320/2) = reg3;
-			reg3 = (reg3 & 0xf7def7de) >> 1;
-
-			// Write (a,b,e,f)-(a,e)
-			*(to++ + 320/2) = reg1 + reg3;
-			
-			// Read d-c
-			reg1 = *from;
-
-			// Write c-b
-			reg5 |= (reg1 << 16);
-			*to = reg5;
-			reg5 = (reg5 & 0xf7def7de) >> 1;
-
-			// Read h-g
-			reg3 = *(from++ + 160/2);
-
-			// Write g-f
-			reg2 |= (reg3 << 16);
-			*(to + 2*320/2) = reg2;
-			reg2 = (reg2 & 0xf7def7de) >> 1;
-
-			// Write (c,g)-(b,f)
-			*(to++ + 320/2) = reg2 + reg5;
-
-			// Write d-(c,d)
-			reg2 = (reg1 & 0xf7def7de) >> 1;
-			reg1 = (reg1 & 0xffff0000) | ((reg2 + (reg2 >> 16)) & 0xffff);
-			*to = reg1;
-			reg1 = (reg1 & 0xf7def7de) >> 1;
-
-			// Write h-(g,h)
-			reg2 = (reg3 & 0xf7def7de) >> 1;
-			reg3 = (reg3 & 0xffff0000) | ((reg2 + (reg2 >> 16)) & 0xffff);
-			*(to + 2*320/2) = reg3;
-			reg3 = ((reg3 & 0xf7def7de) >> 1);
-
-			// Write (d,h)-(c,d,g,h)
-			*(to++ + 320/2) = reg1 + reg3;
-		}
-
-		to += 2*360/2;
-		from += 160/2;
-	}
+ 
+/* Upscale from 160x144 to 240x216 */
+void ayla_scale15x(uint32_t *to, uint32_t *from)
+{
+        /* Before:
+         *    a b c d
+         *    e f g h
+         *
+         * After (parenthesis = average):
+         *    a      (a,b)      b      c      (c,d)      d
+         *    (a,e)  (a,b,e,f)  (b,f)  (c,g)  (c,d,g,h)  (d,h)
+         *    e      (e,f)      f      g      (g,h)      h
+         */
+ 
+        uint32_t reg1, reg2, reg3, reg4, reg5;
+        size_t x, y;
+ 
+        for (y=0; y<216/3; y++) {
+                for (x=0; x<240/6; x++) {
+                        prefetch(to+4, 1);
+ 
+                        /* Read b-a */
+                        reg1 = *from;
+                        reg5 = reg1 >> 16;
+                        if (unlikely((reg1 & 0xffff) != reg5)) {
+                                reg2 = (reg1 & 0xf7de0000) >> 1;
+                                reg1 = (reg1 & 0xffff) + reg2 + ((reg1 & 0xf7de) << 15);
+                        }
+ 
+                        /* Write (a,b)-a */
+                        *to = reg1;
+ 
+                        /* Read f-e */
+                        reg3 = *(from++ + 160/2);
+                        reg2 = reg3 >> 16;
+                        if (unlikely((reg3 & 0xffff) != reg2)) {
+                                reg4 = (reg3 & 0xf7de0000) >> 1;
+                                reg3 = (reg3 & 0xffff) + reg4 + ((reg3 & 0xf7de) << 15);
+                        }
+ 
+                        /* Write (e,f)-e */
+                        *(to + 2*320/2) = reg3;
+ 
+                        /* Write (a,b,e,f)-(a,e) */
+                        if (unlikely(reg1 != reg3))
+                                reg1 = ((reg1 & 0xf7def7de) >> 1) + ((reg3 & 0xf7def7de) >> 1);
+                        *(to++ + 320/2) = reg1;
+ 
+                        /* Read d-c */
+                        reg1 = *from;
+                        reg4 = reg1 << 16;
+ 
+                        /* Write c-b */
+                        reg5 |= reg4;
+                        *to = reg5;
+ 
+                        /* Read h-g */
+                        reg3 = *(from++ + 160/2);
+ 
+                        /* Write g-f */
+                        reg2 |= (reg3 << 16);
+                        *(to + 2*320/2) = reg2;
+ 
+                        /* Write (c,g)-(b,f) */
+                        if (unlikely(reg2 != reg5))
+                                reg2 = ((reg5 & 0xf7def7de) >> 1) + ((reg2 & 0xf7def7de) >> 1);
+                        *(to++ + 320/2) = reg2;
+ 
+                        /* Write d-(c,d) */
+                        if (unlikely((reg1 & 0xffff0000) != reg4)) {
+                                reg2 = (reg1 & 0xf7def7de) >> 1;
+                                reg1 = (reg1 & 0xffff0000) | ((reg2 + (reg2 >> 16)) & 0xffff);
+                        }
+                        *to = reg1;
+ 
+                        /* Write h-(g,h) */
+                        if (unlikely((reg3 & 0xffff) != reg3 >> 16)) {
+                                reg2 = (reg3 & 0xf7def7de) >> 1;
+                                reg3 = (reg3 & 0xffff0000) | ((reg2 + (reg2 >> 16)) & 0xffff);
+                        }
+                        *(to + 2*320/2) = reg3;
+ 
+                        /* Write (d,h)-(c,d,g,h) */
+                        if (unlikely(reg1 != reg3))
+                                reg1 = ((reg1 & 0xf7def7de) >> 1) + ((reg3 & 0xf7def7de) >> 1);
+                        *(to++ + 320/2) = reg1;
+                }
+ 
+                to += 2*360/2;
+                from += 160/2;
+        }
 }
 
 /****************************************************************/
@@ -840,10 +845,10 @@ void vid_begin(){
 			border1.w=320;
 			border1.h=240;
 			SDL_BlitSurface(bordersf, &border1, screen, NULL);
-			#if defined(GCWZERO)
+			#if defined(DINGOO_OPENDINGUX)
 			SDL_Flip(screen);                                    /*Fix for flickering borders with double buffer*/
 			SDL_BlitSurface(bordersf, &border1, screen, NULL);   /*Paints the border image two times*/
-			#endif /*GCWZERO*/
+			#endif /*DINGOO_OPENDINGUX*/
 		}
 		if ((upscaler > 0) && (upscaler < 3)) {
 			SDL_Rect border1;
@@ -852,13 +857,15 @@ void vid_begin(){
 			border1.w=320;
 			border1.h=240;
 			SDL_BlitSurface(bordersf, &border1, screen, NULL);
+			#if defined(DINGOO_OPENDINGUX)
 			SDL_Flip(screen);                                    /*Fix for flickering borders with double buffer*/
 			SDL_BlitSurface(bordersf, &border1, screen, NULL);   /*Paints the border image two times*/
+			#endif /*DINGOO_OPENDINGUX*/
 		}
 		vid_fb.first_paint = 0;
 		vid_fb.dirty = 0;
 	} 
-	#if defined(GCWZERO)
+	#if defined(DINGOO_OPENDINGUX)
 	else if(vid_fb.first_paint && bmpenabled == 0){            /*This also fixes flickering screen with double buffer when borders are disabled*/
 		SDL_Rect rect;                                           /*Paints the background in black color when there is no border*/
 		rect.x = 0;
@@ -867,7 +874,7 @@ void vid_begin(){
 		rect.h = screen->h;
 		SDL_FillRect(screen, &rect, 0x000000);
 	}
-	#endif /*GCWZERO*/
+	#endif /*DINGOO_OPENDINGUX*/
 }
 
 void osd_volume(){
@@ -1448,11 +1455,11 @@ int main(int argc, char *argv[]){
 #ifdef WIZ
 	screen = WIZ_SetVideoMode(320, 240, 16, SDL_SWSURFACE);
 #else
-#ifdef GCWZERO
+#ifdef DINGOO_OPENDINGUX
 	screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_DOUBLEBUF);
 #else
 	screen = SDL_SetVideoMode(320, 240, 16, SDL_SWSURFACE);
-#endif /* GCWZERO */
+#endif /* DINGOO_OPENDINGUX */
 #endif /* WIZ */
 	SDL_ShowCursor(0);
 
@@ -1641,7 +1648,7 @@ int main(int argc, char *argv[]){
 	rc_command("set frameskip 0");
 	rc_command("set clockspeed 0");
 	
-#ifdef GCWZERO
+#ifdef DINGOO_OPENDINGUX
 	{
 		char *tmp_pwd;
 		char tmp_commmand[sizeof(tmp_pwd) + 30];
@@ -1662,7 +1669,7 @@ int main(int argc, char *argv[]){
 #else
 	rc_command("set romdir \"roms\"");
 #endif /* DINGOO_BUILD */
-#endif /* GCWZERO */
+#endif /* DINGOO_OPENDINGUX */
 #ifdef DINGOO_SIM
 	rc_sourcefile("a:"DIRSEP"ohboy"DIRSEP"ohboy.rc");
 	rc_sourcefile("a:"DIRSEP"ohboy"DIRSEP"bindings.rc");

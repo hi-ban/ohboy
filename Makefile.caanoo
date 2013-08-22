@@ -1,0 +1,80 @@
+
+SDK_PATH = C:/SDKs/GPH_SDK
+
+CC = $(SDK_PATH)/tools/cross-eabi/bin/arm-gph-linux-gnueabi-gcc
+LD = $(CC)
+
+CFLAGS = -O3 -mcpu=arm926ej-s -mtune=arm926ej-s -I$(SDK_PATH)/include -I$(SDK_PATH)/DGE/include -I$(SDK_PATH)/include/freetype2/freetype -I$(SDK_PATH)/include/freetype2 -I$(SDK_PATH)/DGE/include/SDL
+LDFLAGS = -s -L$(SDK_PATH)/lib -L$(SDK_PATH)/DGE/lib
+
+GNUBOY = ./gnuboy
+
+OBJS = $(GNUBOY)/lcd.o $(GNUBOY)/refresh.o $(GNUBOY)/lcdc.o $(GNUBOY)/palette.o $(GNUBOY)/cpu.o $(GNUBOY)/mem.o \
+	$(GNUBOY)/rtc.o $(GNUBOY)/hw.o $(GNUBOY)/sound.o \
+	$(GNUBOY)/events.o $(GNUBOY)/keytable.o \
+	$(GNUBOY)/loader.o $(GNUBOY)/save.o $(GNUBOY)/debug.o $(GNUBOY)/emu.o $(GNUBOY)/main.o \
+	$(GNUBOY)/rccmds.o $(GNUBOY)/rckeys.o $(GNUBOY)/rcvars.o $(GNUBOY)/rcfile.o $(GNUBOY)/exports.o \
+	$(GNUBOY)/split.o $(GNUBOY)/path.o $(GNUBOY)/inflate.o \
+	$(GNUBOY)/sys/sdl/SFont.o \
+	$(GNUBOY)/unzip/unzip.o $(GNUBOY)/unzip/ioapi.o \
+	gui_sdl.o keymap.o main.o menu.o \
+	./ubytegui/dialog.o ./ubytegui/font.o ./ubytegui/gui.o ./ubytegui/pixmap.o \
+	sdl_gp2xpatch.o
+
+DEFS = -DIS_LITTLE_ENDIAN -DGP2X -DCAANOO -D__NO_STRING_INLINES -DGNUBOY_NO_SCREENSHOT
+INCS = -I$(GNUBOY) -I$(GNUBOY)/sys/sdl
+LIBS = -lSDL -lz
+
+################################## BUILD OPTIONS #######################################
+##################### UNCOMMENT THE OPTIONS YOU WANT TO USE ############################
+
+#USE_SDL_IMAGE = True
+USE_LIBPNG = True
+USE_FREETYPE_TTF = True
+
+########################################################################################
+#-------------------------------------NOTES--------------------------------------------#
+# USE_SDL_IMAGE - It is for use with SFont (rather than FREETYPE_TTF)                  #
+# NOTE:           You can still use SFont without SDL_image.                           #
+#--------------------------------------------------------------------------------------#
+# USE_LIBPNG -  If set, it will use libpng and attempt to load PNG files from "etc".   #
+# NOTE:         If not set, it will just attempt to load BMP files from "etc".         #
+#--------------------------------------------------------------------------------------#
+# USE_FREETYPE_TTF  - It enables the use of Freetype2 library and uses a TTF font.     #
+# NOTE:               If not set, SFont is used.                                       #
+#--------------------------------------------------------------------------------------#
+########################################################################################
+ifdef USE_SDL_IMAGE
+	LIBS +=  -lSDL_image
+	CFLAGS += -DOHBOY_USE_SDL_IMAGE
+endif
+########################################################################################
+ifdef USE_LIBPNG
+	DEFS += -DUBYTE_USE_LIBPNG
+	LIBS += -lpng
+endif
+########################################################################################
+ifdef USE_FREETYPE_TTF
+	INCS += -I$(SDK_PATH)/include/freetype2/ -I$(SDK_PATH)/include/freetype2/freetype
+	LIBS +=  -lfreetype
+	DEFS += -DUBYTE_USE_FREETYPE
+endif
+########################################################################################
+
+MYCC = $(CC) $(CFLAGS) $(INCS) $(DEFS)
+
+all: ohboy
+
+ohboy: OhBoy.gpe
+
+OhBoy.gpe: $(OBJS)
+	$(LD) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
+
+clean:
+	rm -f OhBoy.gpe *.o ubytegui/*.o $(GNUBOY)/*.o $(GNUBOY)/sys/sdl/*.o $(GNUBOY)/unzip/*.o
+
+$(GNUBOY)/main.o:
+	$(MYCC) -Dmain=gnuboy_main -c $(GNUBOY)/main.c -o $@
+
+.c.o:
+	$(MYCC) -c $< -o $@

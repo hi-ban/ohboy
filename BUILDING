@@ -1,0 +1,43 @@
+Source code for OhBoy 1.0.0 beta 1
+2009 (C) Copyright UBYTE
+ubyte.cwb@goolemail.com
+www.clockworkbytes.com
+
+BUILDING
+
+I'm very sorry but this is a very hasty source release.
+I've included hacked together makefiles for mingw32 and devkitgp2x,
+it should be enough to see how things should build.
+
+There are lots and lots of warnings I really should take care of
+and the source itself is hacky in places and will need a reorganise
+to make it portable. All things on the to-do list.
+
+Note that OhBoy overrides gnuboy's main function by redefining it as
+gnuboy_main when compiling.
+
+Please do not hesitate to contact me on the GP32x boards or by email.
+I'll do the best I can to help.
+
+DEPENDENCIES
+SDL
+libpng
+libz
+Freetype2
+
+
+LICENCE
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.

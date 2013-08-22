@@ -1,0 +1,121 @@
+# cd /cygdrive/l/dingoo/native/ohboy/
+#
+#         . /mnt/hda6/home/clach04/dingoo_native_sdk_bin/dingoo_sdk_setup.sh 
+# make -B -f Makefile.dingoo
+
+CC = mipsel-linux-gcc
+LD = mipsel-linux-ld
+
+INCLUDE   = -I$(DINGOO_SDK)/include -I$(DINGOO_SDK)/include/zlib -I$(DINGOO_SDK)/include/SDL -I../lib -I$(MIPSTOOLS)/mipsel-linux/include -I./ 
+
+W_OPTS    = -Wall -Wextra -finline-functions -fomit-frame-pointer -msoft-float -fno-builtin -fno-exceptions
+CC_OPTS   = -G0 -O3 -mips32 -mno-abicalls -fno-pic $(W_OPTS) -D_DEBUG -DMPU_JZ4740 -c
+CC_OPTS   += -DNDEBUG=1  ## allow assert() calls to be removed, if left fails to build with Dingoo native
+CC_OPTS   += -DIS_LITTLE_ENDIAN -DDINGOO_NATIVE -DDINGOO_BUILD -DDINGOO_SIM -DGNUBOY_DISABLE_MAIN=1 -DGNUBOY_USE_BINARY_RTC_FILES=1 -DGNUBOY_DISABLE_DEBUG_DISASSEMBLE -DDINGOO_DIE_LOG_TO_FILE 
+# tmp debug until dir browseing api/sdk is updated
+#CC_OPTS   += -DDEBUG_ALWAYS_RETURN_ADJUSTRIS_GB
+CC_OPTS   += -DGNUBOY_HARDWARE_VOLUME
+CC_OPTS   += -DGNUBOY_NO_PRINTF  ## dingoo does have printf BUT it goes to the serial port (well contact pads where you can solder a serial port/line).
+CC_OPTS   += -DOHBOY_FILE_STAT_NOT_AVAILABLE
+
+
+
+
+CFLAGS = $(CC_OPTS)
+LIB_PATH  = $(DINGOO_SDK)/lib
+
+LD_SCRIPT = $(DINGOO_SDK)/lib/dingoo.xn
+LD_OPTS   = -nodefaultlibs --script $(LD_SCRIPT) -L$(LIB_PATH) $(LIBS) -o $(APP_NAME).elf
+
+LDFLAGS = $(LD_OPTS)
+
+GNUBOY = ./gnuboy
+
+# $(GNUBOY)/main.o $(GNUBOY)/path.o
+OBJS = $(GNUBOY)/lcd.o $(GNUBOY)/refresh.o $(GNUBOY)/lcdc.o $(GNUBOY)/palette.o $(GNUBOY)/cpu.o $(GNUBOY)/mem.o \
+	$(GNUBOY)/rtc.o $(GNUBOY)/hw.o $(GNUBOY)/sound.o \
+	$(GNUBOY)/events.o $(GNUBOY)/keytable.o \
+	$(GNUBOY)/loader.o $(GNUBOY)/save.o $(GNUBOY)/debug.o $(GNUBOY)/emu.o $(GNUBOY)/sys/dingoo/sim.o $(GNUBOY)/sys/dingoo/main.o \
+	$(GNUBOY)/rccmds.o $(GNUBOY)/rckeys.o $(GNUBOY)/rcvars.o $(GNUBOY)/rcfile.o $(GNUBOY)/exports.o \
+	$(GNUBOY)/split.o $(GNUBOY)/inflate.o \
+	$(GNUBOY)/sys/sdl/SFont.o  \
+	gui_sdl.o keymap.o \
+	main.o menu.o \
+	./ubytegui/dialog.o ./ubytegui/font.o ./ubytegui/gui.o ./ubytegui/pixmap.o \
+
+## NOTE inc paths are from TinyCore SDL-dev
+DEFS = -DIS_LITTLE_ENDIAN -DALT_PATH_SEP
+INCS = $(INCLUDE) -I$(GNUBOY) -I$(GNUBOY)/sys/sdl -I/usr/include/
+#LIBS =  -lpng -lz -lSDL -lsml -lm -lc -ljz4740 -lgcc
+LIBS =   -lSDL -lsml -lc -ljz4740 -lgcc
+## NOTE png lib pngrtran.c needs fabs (float abs function) and pow, not cool... 
+
+
+# Use SDL_image - for use with SFont (rather than FREETYPE_TTF)
+# NOTE can still use SFont without SDL_image
+USE_SDL_IMAGE = True
+ifdef USE_SDL_IMAGE
+	#LIBS +=  -lSDL_image  # Not needed with Native SDK, SDL_image is built into the Native SDL lib
+	LIBS += -lpng -lz -lSDL -lsml -lm -lc -ljz4740 -lgcc
+	CFLAGS += -DOHBOY_USE_SDL_IMAGE
+endif
+
+## Requirements for (optional) .zip support
+## Disable with GNUBOY_USE_MINIZIP defined
+OBJS += $(GNUBOY)/unzip/unzip.o $(GNUBOY)/unzip/ioapi.o
+LIBS += -lz
+CFLAGS += -DUSE_FILE32API
+
+# USE_LIBPNG if set will use libpng AND attempt to load png file from "etc".
+# if not set will use attempt to load bmp file "etc".
+# NOTE also see USE_SDL_IMAGE - which is not limited to only png (however SDL_image does need libpng)
+#USE_LIBPNG = True
+ifdef USE_LIBPNG
+	DEFS += -DUBYTE_USE_LIBPNG
+	#LIBS += -lpng -lm
+	LIBS = -lpng -lz -lSDL -lsml -lm -lc -ljz4740 -lgcc
+	## NOTE png lib pngrtran.c needs fabs (float abs function) and pow, not cool... 
+endif
+
+# USE_FREETYPE_TTF enables the se of Freetype2library (not SDL_ttf) and uses a ttf file at runtime
+# quality of results on screen is excellent, if not set SFont is used.
+# SFont can have excellent results but the bitmpa font supplied at the moment is not pretty.
+#USE_FREETYPE_TTF = True
+ifdef USE_FREETYPE_TTF
+	INCS += -I/usr/include/freetype2/ -I/usr/include/freetype2/freetype
+	LIBS +=  -lfreetype
+	DEFS += -DUBYTE_USE_FREETYPE
+endif
+
+DEFS += -DGNUBOY_NO_SCREENSHOT
+
+
+MYCC = $(CC) $(CFLAGS) $(INCS) $(DEFS)
+
+APP_NAME = ohboy_dingoo
+
+all : ohboy_ver.h $(APP_NAME).app
+
+# FIXME need better dependency handling
+menu.o: ohboy_ver.h
+
+ohboy_ver.h:
+	sh gen_ohboyver.sh > ohboy_ver.h
+
+$(APP_NAME).app : $(APP_NAME).elf
+	$(DINGOO_SDK)/tools/elf2app/elf2app $(APP_NAME)
+
+	mv $(APP_NAME).app $(APP_NAME).sim
+
+$(APP_NAME).elf : $(OBJS)
+	$(LD) $(OBJS) $(LD_OPTS)
+
+
+clean:
+	rm -f ohboy ohboy.exe *.o ubytegui/*.o $(GNUBOY)/*.o $(GNUBOY)/unzip/*.o  $(GNUBOY)/sys/*/*.o  $(APP_NAME).elf $(APP_NAME).bin $(APP_NAME).app $(APP_NAME).sim $(TARGET)
+
+$(GNUBOY)/main.o:
+	$(MYCC) -Dmain=gnuboy_main -c $(GNUBOY)/main.c -o $@
+
+.c.o:
+	$(MYCC) -c $< -o $@

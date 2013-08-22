@@ -1,0 +1,92 @@
+This is an unofficial build. The changes over the official source are:
+
+(2013-08-22)
+- GCW Zero version now uses hardware double buffering. Fixed flickering when using double buffering.
+
+(2013-08-12)
+- Enabled scroll looping when menu list is smaller than the screen (previously it was only enabled then the list was bigger than the screen).
+- Added support for external palette files (.pal extension). Now they aren't embedded into the executable anymore.
+- Added support for browsing border images (.bmp extension). 
+- Improved fullscreen scaler (Paul Cercueil).
+- Fixed rom dir bug in GCW Zero (clach04).
+
+(2013-04-04)
+- Added Super Gameboy palette and borders.
+
+(2013-04-01)
+- Updated Gnuboy core to version 1.0.6
+
+(2012-12-11)
+- Added support for opendingux OPK packages.
+
+(2012-11-06)
+- Added Opendingux build.
+
+(2012-08-15)
+- Minor changes (DemoVision palettes and filters).
+
+(2012-02-24)
+- Made it optional to load SRAM data when loading a savestate. New option (State SRAM) added to options menu. Default is ON.
+
+(2012-02-23)
+- Fixed Savestates overwriting SRAM saves (Gnuboy source).
+- Fix for font routes in Dingoo SIM version.
+
+(2012-01-19)
+- Dingoo Ohboy now can launch zipped roms from Dingoo menu (File extension must be changed from ZIP to GBZ). NOTE: This is only needed for Dingoo SIM version. Other versions (Caanoo, Dingoo APP, etc...) don't need GBZ.
+- Added fast scroll and scroll looping in Ohboy menu (when the file list is bigger than the screen).
+
+(2012-01-18)
+- Ohboy now saves volume settings (for devices that support it).
+- Ohboy no longer needs "misc.rc" file (for dingoo SIM build)
+
+(2012-01-17)
+- Added 6 new Filter types.
+- Fixed Ohboy forcing launch menu instead of launching the selected rom in Dingoo explorer. (Dingoo SIM version) 
+
+(2012-01-16)
+- Now can select Filter Types in Options Menu (Grayscale, Color 50%...)
+- Dingoo Native build is now SIM instead of APP.
+
+(2011-11-01)
+- Replaced old 1.5x upscaler(8bit color, slower) with Ayla's 1.5x upscaler (16bit color, faster).
+- Improved menu responsiveness on Caanoo (not perfect yet, but much better).
+- 3 new color palettes.
+- Reworked other palettes.
+- Now there is support for 3 Custom border packs.
+- Default Border Packs included:
+		- Default "OhBoy".
+		- Classic Gameboy: Grey, Black, Yellow, Red, Blue, Green, Clear(Transparent).
+		- Gameboy Pocket: Silver, Black, Yellow, Red, Blue, Green, Clear(Transparent).
+		- Gameboy Color: Yellow, Blue, Green, Teal, Pink, AtomicPurple(Transparent).
+
+(2011-10-19)
+- A couple new color palettes. Now there is a total of 30 different palettes.
+- Support for selecting border packs from the options menu.
+
+(2011-08-21) 
+- Support for BMP borders (2 different borders, depending of the upscaler used).
+- Minor aestethic changes.
+
+However, this changes might be included sooner or later in the official source.
+
+
+
+
+NOTES FOR OPENDINGUX:
+
+- Palette (.PAL) files must be placed into the "$HOME/.ohboy/palettes/" directory.
+- Border (.BMP) files must be placed into the "$HOME/.ohboy/borders/" directory.
+- The emulator will store the save files into the "$HOME/.ohboy/saves/" directory.
+- The emulator will store the config files (.RC) into the "$HOME/.ohboy/" directory.
+- ROM files can be placed anywhere.
+
+NOTES FOR ANYTHING ELSE:
+
+- Palette (.PAL) files must be placed into the "palettes/" directory.
+- Border (.BMP) files must be placed into the "borders/" directory.
+- The emulator will store the save files into the "saves/" directory.
+- The emulator will store the config files (.RC) into the same directory the executable is in.
+- ROM files can be placed anywhere.
+
+Have a nice day!

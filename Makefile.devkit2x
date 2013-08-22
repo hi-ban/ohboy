@@ -1,0 +1,38 @@
+
+CC = C:/devkitgp2x/bin/arm-linux-gcc.exe
+LD = $(CC)
+
+CFLAGS = -O3 -mcpu=arm926ej-s -mtune=arm926ej-s -IC:\devkitgp2x\include -IC:\devkitgp2x\lib\gcc\arm-linux\4.0.2\include
+LDFLAGS = -s -LC:\devkitgp2x\lib
+
+GNUBOY = ./gnuboy
+
+OBJS = $(GNUBOY)/lcd.o $(GNUBOY)/refresh.o $(GNUBOY)/lcdc.o $(GNUBOY)/palette.o $(GNUBOY)/cpu.o $(GNUBOY)/mem.o \
+	$(GNUBOY)/rtc.o $(GNUBOY)/hw.o $(GNUBOY)/sound.o \
+	$(GNUBOY)/events.o $(GNUBOY)/keytable.o \
+	$(GNUBOY)/loader.o $(GNUBOY)/save.o $(GNUBOY)/debug.o $(GNUBOY)/emu.o $(GNUBOY)/main.o \
+	$(GNUBOY)/rccmds.o $(GNUBOY)/rckeys.o $(GNUBOY)/rcvars.o $(GNUBOY)/rcfile.o $(GNUBOY)/exports.o \
+	$(GNUBOY)/split.o $(GNUBOY)/path.o $(GNUBOY)/inflate.o \
+	gui_sdl.o keymap.o main.o menu.o \
+	./ubytegui/dialog.o ./ubytegui/font.o ./ubytegui/gui.o ./ubytegui/pixmap.o \
+	sdl_gp2xpatch.o
+
+DEFS = -DIS_LITTLE_ENDIAN -DGP2X -DWIZ -D__NO_STRING_INLINES
+INCS = -I$(GNUBOY) -IC:/devkitgp2x/include/freetype2
+LIBS = -lSDL -lfreetype -lpng -lz
+
+MYCC = $(CC) $(CFLAGS) $(INCS) $(DEFS)
+
+all: ohboy
+
+ohboy: $(OBJS)
+	$(LD) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
+
+clean:
+	rm -f ohboy *.o ubytegui/*.o $(GNUBOY)/*.o
+
+$(GNUBOY)/main.o:
+	$(MYCC) -Dmain=gnuboy_main -c $(GNUBOY)/main.c -o $@
+	
+.c.o:
+	$(MYCC) -c $< -o $@

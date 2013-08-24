@@ -627,8 +627,8 @@ const char *lbutton_r[] = {"None","Button A","Button B","Select","Start","Reset"
 const char *lcolorfilter[] = {"Off","On","GBC Only",NULL};
 const char *lupscaler[] = {"Native (No scale)", "Ayla 1.5x Upscaler", "Scale3x+Sample.75x", "Ayla Fullscreen", NULL};
 const char *lframeskip[] = {"Auto","Off","1","2","3","4",NULL};
-const char *lsdl_showfps[] = {"Off","Text Only","Boxed Text",NULL};
-const char *lborderon[] = {"Off","On",NULL};
+const char *lsdl_showfps[] = {"Off","On",NULL};
+const char *lborderon[] = {"Off","Image File","BG Color",NULL};
 
 #if WIZ
 const char *lclockspeeds[] = {"Default","250 mhz","300 mhz","350 mhz","400 mhz","450 mhz","500 mhz","550 mhz","600 mhz","650 mhz","700 mhz","750 mhz",NULL};
@@ -768,7 +768,11 @@ int menu_options(){
 			}	
 			goto start;
 		case 8: /* "Border Image" */
-		    loadborder = menu_requestfile(NULL,"Select Border Image",borderdir,"bmp");
+#ifdef OHBOY_USE_SDL_IMAGE
+		    loadborder = menu_requestfile(NULL,"Select Border Image",borderdir,"bmp;png");
+#else
+			loadborder = menu_requestfile(NULL,"Select Border Image",borderdir,"bmp");
+#endif /* OHBOY_USE_SDL_IMAGE */
 			if(loadborder){
 				border = loadborder;
 				bordertemp = strdup(border);
@@ -1255,7 +1259,7 @@ snprintf(ohboy_ver_str, sizeof(ohboy_ver_str)-1, "%s Unofficial", OHBOY_VER);
 	dialog_text(NULL,"small handhelds, using the",0);
 	dialog_text(NULL,"Gnuboy emulation core with a",0);
 	dialog_text(NULL,"basic menu system.",0);
-	dialog_text(NULL,NULL,0);
+	dialog_text(NULL,NULL,FIELD_SELECTABLE); /* Not visible, but always selected, allows to exit to main menu by pressing the "selection" button. You can also go to main menu pressing the "back" button */
 	dialog_text(NULL,"OhBoy version:",0);
 	dialog_text(NULL,ohboy_ver_str,0);
 	dialog_text(NULL,NULL,0);
@@ -1263,9 +1267,9 @@ snprintf(ohboy_ver_str, sizeof(ohboy_ver_str)-1, "%s Unofficial", OHBOY_VER);
 	dialog_text(NULL,version_str,0);
 	dialog_text(NULL,NULL,0);
 	dialog_text(NULL,"More info:",0);
+	dialog_text(NULL,"http://github.com/hi-ban/ohboy/",0);
 	dialog_text(NULL,"http://ohboy.googlecode.com/",0);
 	dialog_text(NULL,"http://gnuboy.googlecode.com/",0);
-	dialog_text(NULL,NULL,FIELD_SELECTABLE); /* Not visible, but always selected, allows to exit to main menu by pressing the "selection" button. You can also go to main menu pressing the "back" button */
 
 	switch(ret=dialog_end()){
 		case 1:

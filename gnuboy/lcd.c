@@ -56,6 +56,10 @@ static int sprdebug;
 
 static int dmg_pal[4][4] = { DEF_PAL, DEF_PAL, DEF_PAL, DEF_PAL };
 
+int my_color = 0x98d0e0;
+
+
+
 static int usefilter, filterdmg;
 static int filter[3][4] = {
 	{ 195,  25,   0,  35 },
@@ -798,6 +802,8 @@ void pal_write_dmg(int i, int mapnum, byte d)
 	int j;
 	int *cmap = dmg_pal[mapnum];
 	int c, r, g, b;
+	if (hw.cgb){my_color = 0xFFFFFF;}
+	if (!hw.cgb){my_color = dmg_pal[0][0];}
 
 	if (hw.cgb) return;
 

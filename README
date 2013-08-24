@@ -1,5 +1,9 @@
 This is an unofficial build. The changes over the official source are:
 
+(2013-08-25)
+- Added option for using BG color of the current palette as border (Thanks Johnnyonflame and Paul Cercueil).
+- Added support for using PNG images as borders.
+
 (2013-08-22)
 - GCW Zero version now uses hardware double buffering. Fixed flickering when using double buffering.
 - Updated 1.5x and fullscreen scalers(Paul Cercueil).

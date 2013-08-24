@@ -286,8 +286,13 @@ void vid_init() {
 	
 	if (bmpenabled == 0){
 		bordersf = NULL;}
-	else if (bmpenabled == 1){
+	else if (bmpenabled == 1)
+	{
+#ifdef OHBOY_USE_SDL_IMAGE
+		bordersf = IMG_Load(border);
+#else
 		bordersf = SDL_LoadBMP(border);
+#endif /*OHBOY_USE_SDL_IMAGE*/
 		#if defined(DINGOO_OPENDINGUX)
 		if (bordersf == NULL){                 /*Fix for flickering screen when borders are set to On but no border is loaded, and double buffer is used*/
 			bordersf = SDL_LoadBMP("etc"DIRSEP"black.bmp");
@@ -837,6 +842,30 @@ void vid_begin(){
 		/* add border to display if enabled and not using fullscreen
 	   this should be integrated with vid_fb.dirty probably... */
 	if(vid_fb.first_paint && bmpenabled == 1){
+	
+		SDL_Rect rect;
+		rect.x = 0;
+		rect.y = 0;
+		rect.w = screen->w;
+		rect.h = screen->h;
+
+		uint32_t colour = my_color; // (BGR format bbbbbbbb gggggggg rrrrrrrr)
+		uint8_t r,g,b;
+		b = (colour & 0xFF0000) >> 16; //Remove G and R, shift it left by two bytes
+		g = (colour & 0x00FF00) >> 8; //Remove B and R, shift it left by one byte
+		r = (colour & 0x0000FF); //Remove B and G, this is already on the left.
+		printf("r: %i g: %i b: %i\n", r, g, b);
+
+		uint16_t hexcolor;
+		hexcolor = ((r & 0xf8) << 8) | //mask out three bits, shift em to their place (rrrrr 000000 00000)
+				((g & 0xfc) << 3) | //mask out two bits, move em to their place (rrrrr gggggg 00000)
+				((b & 0xf8) >> 3); //mask out three bits, shift em to their plae (rrrrr gggggg bbbbb)
+		SDL_FillRect(screen, &rect, hexcolor);
+		#if defined(DINGOO_OPENDINGUX)
+		SDL_Flip(screen);                                        /*Fix for flickering borders with double buffer*/
+		SDL_FillRect(screen, &rect, hexcolor);                   /*Paints the border color two times*/
+		#endif /*DINGOO_OPENDINGUX*/
+	
 		vid_init;
 		if (!upscaler) {
 			SDL_Rect border1;
@@ -866,7 +895,7 @@ void vid_begin(){
 		vid_fb.dirty = 0;
 	} 
 	#if defined(DINGOO_OPENDINGUX)
-	else if(vid_fb.first_paint && bmpenabled == 0){            /*This also fixes flickering screen with double buffer when borders are disabled*/
+	if(vid_fb.first_paint && bmpenabled == 0){            /*This also fixes flickering screen with double buffer when borders are disabled*/
 		SDL_Rect rect;                                           /*Paints the background in black color when there is no border*/
 		rect.x = 0;
 		rect.y = 0;
@@ -875,6 +904,26 @@ void vid_begin(){
 		SDL_FillRect(screen, &rect, 0x000000);
 	}
 	#endif /*DINGOO_OPENDINGUX*/
+	if(vid_fb.first_paint && bmpenabled == 2){            /*Fill the borders with the background color*/
+		SDL_Rect rect;
+		rect.x = 0;
+		rect.y = 0;
+		rect.w = screen->w;
+		rect.h = screen->h;
+
+		uint32_t colour = my_color; // (BGR format bbbbbbbb gggggggg rrrrrrrr)
+		uint8_t r,g,b;
+		b = (colour & 0xFF0000) >> 16; //Remove G and R, shift it left by two bytes
+		g = (colour & 0x00FF00) >> 8; //Remove B and R, shift it left by one byte
+		r = (colour & 0x0000FF); //Remove B and G, this is already on the left.
+		printf("r: %i g: %i b: %i\n", r, g, b);
+
+		uint16_t hexcolor;
+		hexcolor = ((r & 0xf8) << 8) | //mask out three bits, shift em to their place (rrrrr 000000 00000)
+				((g & 0xfc) << 3) | //mask out two bits, move em to their place (rrrrr gggggg 00000)
+				((b & 0xf8) >> 3); //mask out three bits, shift em to their plae (rrrrr gggggg bbbbb)
+		SDL_FillRect(screen, &rect, hexcolor);
+	}
 }
 
 void osd_volume(){
@@ -936,19 +985,13 @@ void vid_end() {
         {
             fps_current_time = SDL_GetTicks();
             fps_current_count++;
-            snprintf(fps_str, 19, "%d FPS", fps_last_count);
-            if (sdl_showfps > 1)
+            if (sdl_showfps == 1)
             {
-                myrect.w = SFont_TextWidth(fps_font, fps_str);
+                snprintf(fps_str, 19, "%d FPS", fps_last_count);
+				myrect.w = SFont_TextWidth(fps_font, fps_str);
                 SDL_FillRect(screen, &myrect, 0 );
             }
-            /* 
-			TODO: Insert a fix for the "Text only" FPS, to erase the previous text frame before the new text frame is printed.
-			if (sdl_showfps == 1)
-			{
-				INSERT A FIX HERE ("vid_fb.dirty = 1" works, but deletes BMP borders from screen.)
-			}
-			*/
+
             SFont_Write(screen, fps_font, 0,0, fps_str);
             if ( fps_current_time - fps_last_time >= 1000 )
             {
@@ -1403,6 +1446,7 @@ static void shutdown()
 	fb.enabled = 0;
 }
 
+
 void ohb_loadrom(char *rom){
 	char *base, *save, *ext=0, *tok;
 	sys_sanitize(rom);
@@ -1465,6 +1509,8 @@ int main(int argc, char *argv[]){
 
 	sdl_joy = SDL_JoystickOpen(0);
 	SDL_JoystickEventState(SDL_ENABLE);
+	
+	int my_color;
 
     /* Menu SFont start */
     /*
@@ -1498,6 +1544,7 @@ int main(int argc, char *argv[]){
         menu_font_bitmap_surface = SDL_LoadBMP("etc" DIRSEP SFONT_NAME ".bmp");
 	#endif /* DINGOO_SIM */
     }
+
     if (!menu_font_bitmap_surface)
     {
         /* use internal font */

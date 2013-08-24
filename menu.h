@@ -17,5 +17,6 @@ int launcher();
 
 extern struct fb vid_fb;
 extern char *border;
+extern int my_color;
 
 #endif /* MENU_H_INCLUDED */

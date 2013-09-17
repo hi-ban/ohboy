@@ -1,5 +1,11 @@
 This is an unofficial build. The changes over the official source are:
 
+(2013-09-17)
+- Fixed Color Filters not being applied to the BGcolor.
+- Fixed BGcolor failing to be updated in some cases when playing a GBC game.
+- Added option for selecting separate DMG and GBC borders.
+- Borders will automatically change depending on the current game being DMG or GBC.
+
 (2013-08-25)
 - Added option for using BG color of the current palette as border (Thanks Johnnyonflame and Paul Cercueil).
 - Added support for using PNG images as borders.

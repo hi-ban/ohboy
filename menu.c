@@ -647,7 +647,7 @@ int menu_options(){
 
 	struct filt_s *filtp=0;
 	int filt=0, skip=0, ret=0, cfilter=0, sfps=0, upscale=0, speed=0, i=0, sndlvl=10, statesram=1, borderon=0;
-	char *romdir=0, *romtemp=0, *paldir=0, *loadpal=0, *pal=0, *paltemp=0, *palname=0, *borderdir=0, *loadborder=0, *border=0, *bordertemp=0, *bordername=0;
+	char *romdir=0, *romtemp=0, *paldir=0, *loadpal=0, *pal=0, *paltemp=0, *palname=0, *borderdir=0, *loadborder=0, *border=0, *bordertemp=0, *bordername=0, *gbcborder=0, *gbcbordertemp=0, *gbcbordername=0;
 
 	FILE *file;
 #ifdef DINGOO_NATIVE
@@ -719,10 +719,14 @@ int menu_options(){
 #endif /* DINGOO_OPENDINGUX */
 #endif /* DINGOO_SIM */
     border = rc_getstr("border");
-	border = border ? strdup(border) : strdup("Select Border");
-	
+	border = border ? strdup(border) : strdup("Select DMG Border");	
 	bordertemp = strdup(border);
 	bordername = basexname(bordertemp);
+	
+	gbcborder = rc_getstr("gbcborder");
+	gbcborder = gbcborder ? strdup(gbcborder) : strdup("Select GBC Border");	
+	gbcbordertemp = strdup(gbcborder);
+	gbcbordername = basexname(gbcbordertemp);
 	
 	start:
 
@@ -735,27 +739,28 @@ int menu_options(){
 	dialog_option("Frameskip",lframeskip,&skip);                /* 5 */
 	dialog_option("Show FPS",lsdl_showfps,&sfps);               /* 6 */
 	dialog_option("Use Borders",lborderon,&borderon);               /* 7 */
-	dialog_text("Border Image",bordername,FIELD_SELECTABLE);             /* 8 */
+	dialog_text("DMG Border Image",bordername,FIELD_SELECTABLE);             /* 8 */
+	dialog_text("GBC Border Image",gbcbordername,FIELD_SELECTABLE);             /* 9 */
 #if defined(WIZ) || defined(DINGOO_NATIVE)
-	dialog_option("Clock Speed",lclockspeeds,&speed);           /* 9 */
+	dialog_option("Clock Speed",lclockspeeds,&speed);           /* 10 */
 #else
-	dialog_text("Clock Speed","Default",0);                     /* 9 */
+	dialog_text("Clock Speed","Default",0);                     /* 10 */
 #endif
 #ifdef DINGOO_SIM
-	dialog_text("Rom Path", "Default", 0);                      /* 10 */
+	dialog_text("Rom Path", "Default", 0);                      /* 11 */
 #else
-	dialog_text("Rom Path",romdir,FIELD_SELECTABLE);            /* 10 */
+	dialog_text("Rom Path",romdir,FIELD_SELECTABLE);            /* 11 */
 #endif /* DINGOO_SIM */
 #ifdef GNUBOY_HARDWARE_VOLUME
-	dialog_option("Volume",lsndlvl,&sndlvl);   /* 11 */ /* this is not the OSD volume.. */
+	dialog_option("Volume",lsndlvl,&sndlvl);   /* 12 */ /* this is not the OSD volume.. */
 #else
-	dialog_text("Volume", "Default", 0);                        /* 11 */ /* this is not the OSD volume.. */
+	dialog_text("Volume", "Default", 0);                        /* 12 */ /* this is not the OSD volume.. */
 #endif /* GNBOY_HARDWARE_VOLUME */
-	dialog_option("State SRAM",lstatesram,&statesram);          /* 12 */
-	dialog_text(NULL,NULL,0);                                   /* 13 */
-	dialog_text("Apply",NULL,FIELD_SELECTABLE);                 /* 14 */
-	dialog_text("Apply & Save",NULL,FIELD_SELECTABLE);          /* 15 */
-	dialog_text("Cancel",NULL,FIELD_SELECTABLE);                /* 16 */
+	dialog_option("State SRAM",lstatesram,&statesram);          /* 13 */
+	dialog_text(NULL,NULL,0);                                   /* 14 */
+	dialog_text("Apply",NULL,FIELD_SELECTABLE);                 /* 15 */
+	dialog_text("Apply & Save",NULL,FIELD_SELECTABLE);          /* 16 */
+	dialog_text("Cancel",NULL,FIELD_SELECTABLE);                /* 17 */
 
 
 	switch(ret=dialog_end()){
@@ -767,11 +772,11 @@ int menu_options(){
 				palname = basexname(paltemp);
 			}	
 			goto start;
-		case 8: /* "Border Image" */
+		case 8: /* "DMG Border Image" */
 #ifdef OHBOY_USE_SDL_IMAGE
-		    loadborder = menu_requestfile(NULL,"Select Border Image",borderdir,"bmp;png");
+		    loadborder = menu_requestfile(NULL,"Select DMG Border Image",borderdir,"bmp;png");
 #else
-			loadborder = menu_requestfile(NULL,"Select Border Image",borderdir,"bmp");
+			loadborder = menu_requestfile(NULL,"Select DMG Border Image",borderdir,"bmp");
 #endif /* OHBOY_USE_SDL_IMAGE */
 			if(loadborder){
 				border = loadborder;
@@ -779,18 +784,30 @@ int menu_options(){
 				bordername = basexname(bordertemp);
 			}	
 			goto start;
-		case 10: /* "Rom Path" romdir */
+		case 9: /* "GBC Border Image" */
+#ifdef OHBOY_USE_SDL_IMAGE
+		    loadborder = menu_requestfile(NULL,"Select GBC Border Image",borderdir,"bmp;png");
+#else
+			loadborder = menu_requestfile(NULL,"Select GBC Border Image",borderdir,"bmp");
+#endif /* OHBOY_USE_SDL_IMAGE */
+			if(loadborder){
+				gbcborder = loadborder;
+				gbcbordertemp = strdup(gbcborder);
+				gbcbordername = basexname(gbcbordertemp);
+			}	
+			goto start;
+		case 11: /* "Rom Path" romdir */
 			romtemp = menu_requestdir("Select Rom Directory",romdir);
 			if(romtemp){
 				free(romdir);
 				romdir = romtemp;
 			}
 			goto start;
-		case 16: /* Cancel */
+		case 17: /* Cancel */
 			return ret;
 			break;
-		case 14: /* Apply */
-		case 15: /* Apply & Save */
+		case 15: /* Apply */
+		case 16: /* Apply & Save */
 			#ifdef GNUBOY_HARDWARE_VOLUME
 			pcm_volume(sndlvl * 10);
 			#endif /* GNBOY_HARDWARE_VOLUME */
@@ -876,7 +893,30 @@ int menu_options(){
 			#else
 			sprintf(config[8],"set border \"%s\"",border);
 			#endif /* DINGOO_NATIVE */
-			sprintf(config[9],"set cpuspeed %i",speed);
+			#ifdef DINGOO_NATIVE /* FIXME Windows too..... if (DIRSEP_CHAR == '\\').... */
+			{
+				char tmp_gbcbord[PATH_MAX];
+				char *destc, *srcc;
+				destc = &tmp_gbcbord[0];
+				srcc = gbcborder;
+				
+				/* escape the path seperator (should escape other things too.) */
+				while(*destc = *srcc++)
+				{
+					if (*destc == DIRSEP_CHAR)
+					{
+						destc++;
+						*destc = DIRSEP_CHAR;
+					}
+					destc++;
+				}
+			
+				sprintf(config[9], "set gbcborder \"%s\"", tmp_gbcbord);
+			}
+			#else
+			sprintf(config[9],"set gbcborder \"%s\"",gbcborder);
+			#endif /* DINGOO_NATIVE */
+			sprintf(config[10],"set cpuspeed %i",speed);
 			#ifdef DINGOO_NATIVE /* FIXME Windows too..... if (DIRSEP_CHAR == '\\').... */
 			{
 				char tmp_path[PATH_MAX];
@@ -895,23 +935,23 @@ int menu_options(){
 					dest++;
 				}
 			
-				sprintf(config[10], "set romdir \"%s\"", tmp_path);
+				sprintf(config[11], "set romdir \"%s\"", tmp_path);
 			}
 			#else
-			sprintf(config[10],"set romdir \"%s\"",romdir);
+			sprintf(config[11],"set romdir \"%s\"",romdir);
 			#endif /* DINGOO_NATIVE */
-			sprintf(config[11],"set red 0x%.6x 0x%.6x 0x%.6x 0x%.6x", filtp->red[0], filtp->red[1], filtp->red[2], filtp->red[3]);
-			sprintf(config[12],"set green 0x%.6x 0x%.6x 0x%.6x 0x%.6x", filtp->green[0], filtp->green[1], filtp->green[2], filtp->green[3]);
-			sprintf(config[13],"set blue 0x%.6x 0x%.6x 0x%.6x 0x%.6x", filtp->blue[0], filtp->blue[1], filtp->blue[2], filtp->blue[3]);
-			sprintf(config[14], "set sndlvl %i", sndlvl);
-			sprintf(config[15], "set statesram %i", statesram);
+			sprintf(config[12],"set red 0x%.6x 0x%.6x 0x%.6x 0x%.6x", filtp->red[0], filtp->red[1], filtp->red[2], filtp->red[3]);
+			sprintf(config[13],"set green 0x%.6x 0x%.6x 0x%.6x 0x%.6x", filtp->green[0], filtp->green[1], filtp->green[2], filtp->green[3]);
+			sprintf(config[14],"set blue 0x%.6x 0x%.6x 0x%.6x 0x%.6x", filtp->blue[0], filtp->blue[1], filtp->blue[2], filtp->blue[3]);
+			sprintf(config[15], "set sndlvl %i", sndlvl);
+			sprintf(config[16], "set statesram %i", statesram);
 			
-			for(i=0; i<16; i++)
+			for(i=0; i<17; i++)
 				rc_command(config[i]);
 
 			pal_dirty();
 
-			if (ret == 15){ /* Apply & Save */
+			if (ret == 16){ /* Apply & Save */
 #ifdef DINGOO_SIM
 				file = fopen("a:"DIRSEP"ohboy"DIRSEP"ohboy.rc","w");
 #else
@@ -925,7 +965,7 @@ int menu_options(){
 				file = fopen("ohboy.rc","w");
 #endif /* DINGOO_OPENDINGUX */
 #endif /* DINGOO_SIM */
-				for(i=0; i<16; i++){
+				for(i=0; i<17; i++){
 					fputs(config[i],file);
 					fputs("\n",file);
 				}

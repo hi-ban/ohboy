@@ -76,6 +76,7 @@ struct fb fb;
 static int upscaler=0, frameskip=0, sdl_showfps=0, cpu_speed=0, bmpenabled=0, statesram=1;
 static char* romdir=0, pal=0;
 char *border;
+char *gbcborder;
 static int osd_persist=0;
 static int dvolume=0;
 #ifdef DINGOO_BUILD
@@ -98,6 +99,7 @@ rcvar_t vid_exports[] =
 	RCV_INT("cpuspeed",&cpu_speed),
 	RCV_INT("bmpenabled", &bmpenabled),
 	RCV_STRING("border",&border),
+	RCV_STRING("gbcborder",&gbcborder),
 	RCV_STRING("romdir",&romdir),
 	RCV_STRING("palette",&pal),
 	RCV_INT("button_a", &button_a),
@@ -285,13 +287,15 @@ void vid_init() {
 
 	
 	if (bmpenabled == 0){
-		bordersf = NULL;}
+		bordersf = SDL_LoadBMP("etc"DIRSEP"black.bmp");}
 	else if (bmpenabled == 1)
 	{
 #ifdef OHBOY_USE_SDL_IMAGE
-		bordersf = IMG_Load(border);
+		if (hw.cgb){bordersf = IMG_Load(gbcborder);}
+		if (!hw.cgb){bordersf = IMG_Load(border);}
 #else
-		bordersf = SDL_LoadBMP(border);
+		if (hw.cgb){bordersf = SDL_LoadBMP(gbcborder);}
+		if (!hw.cgb){bordersf = SDL_LoadBMP(border);}
 #endif /*OHBOY_USE_SDL_IMAGE*/
 		#if defined(DINGOO_OPENDINGUX)
 		if (bordersf == NULL){                 /*Fix for flickering screen when borders are set to On but no border is loaded, and double buffer is used*/
@@ -1468,6 +1472,7 @@ void ohb_loadrom(char *rom){
 
 	loader_init(rom);
 	emu_reset();
+	vid_init();
 }
 
 #ifdef DINGOO_BUILD

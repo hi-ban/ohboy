@@ -726,6 +726,33 @@ void lcd_refreshline()
 static void updatepalette(int i)
 {
 	int c, r, g, b, y, u, v, rr, gg;
+	
+	//-----------------------------------------------------------------//
+	
+	int rr2, gg2;
+	int r2=0xFF, g2=0xFF, b2=0xFF;
+	int colorbck = 0x98d0e0;
+	if (hw.cgb){colorbck = 0xFFFFFF;}
+	if (!hw.cgb){colorbck = dmg_pal[0][0];}
+	if (usefilter && (filterdmg || hw.cgb))
+	{
+		b2 = (colorbck & 0xFF0000) >> 16; //Remove G and R, shift it left by two bytes
+		g2 = (colorbck & 0x00FF00) >> 8; //Remove B and R, shift it left by one byte
+		r2 = (colorbck & 0x0000FF); //Remove B and G, this is already on the left.
+	
+		rr2 = ((r2 * filter[0][0] + g2 * filter[0][1] + b2 * filter[0][2]) >> 8) + filter[0][3];
+		gg2 = ((r2 * filter[1][0] + g2 * filter[1][1] + b2 * filter[1][2]) >> 8) + filter[1][3];
+		b2 = ((r2 * filter[2][0] + g2 * filter[2][1] + b2 * filter[2][2]) >> 8) + filter[2][3];
+		r2 = rr2;
+		g2 = gg2;
+		
+		colorbck = ((r2 & 0xff)) | //put filtered colors in their place
+				((g2 & 0xff) << 8) | //put filtered colors in their place
+				((b2 & 0xff) << 16); //put filtered colors in their place
+	}
+	my_color = colorbck;
+	
+	//-----------------------------------------------------------------//
 
 	c = (lcd.pal[i<<1] | ((int)lcd.pal[(i<<1)|1] << 8)) & 0x7FFF;
 	r = (c & 0x001F) << 3;
@@ -802,8 +829,6 @@ void pal_write_dmg(int i, int mapnum, byte d)
 	int j;
 	int *cmap = dmg_pal[mapnum];
 	int c, r, g, b;
-	if (hw.cgb){my_color = 0xFFFFFF;}
-	if (!hw.cgb){my_color = dmg_pal[0][0];}
 
 	if (hw.cgb) return;
 

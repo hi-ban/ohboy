@@ -1,5 +1,9 @@
 This is an unofficial build. The changes over the official source are:
 
+(2013-09-22)
+- Fixed crash in OpenDingux when a saved rom path no longer exists. (in that case now it defaults to $HOME).
+- Changed icon.
+
 (2013-09-17)
 - Fixed Color Filters not being applied to the BGcolor.
 - Fixed BGcolor failing to be updated in some cases when playing a GBC game.

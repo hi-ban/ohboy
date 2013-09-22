@@ -385,6 +385,19 @@ char *menu_requestdir(const char *title, const char *path){
 	return dir;
 }
 
+char *menu_checkdir(char *path, char *alt_path){
+	char *dir;
+	DIR *direxist;
+	direxist = opendir(path);
+	if(direxist == NULL){		
+		dir = alt_path;
+	}else{
+		closedir(direxist);
+		dir = path;
+	}
+	return dir;
+}
+
 /* NOTE number of slot entries is indirectly related to font size */
 /* only display one screen of save slots */
 static const char *slots[] = {
@@ -690,6 +703,11 @@ int menu_options(){
 #else
 	romdir = rc_getstr("romdir");
 #endif /* DINGOO_SIM */
+
+#ifdef DINGOO_OPENDINGUX
+	romdir = menu_checkdir(romdir,getenv("HOME"));
+#endif /* DINGOO_OPENDINGUX */
+
 	romdir = romdir ? strdup(romdir) : strdup(".");
 	
 #ifdef DINGOO_SIM
@@ -1365,6 +1383,9 @@ int menu(){
 				break;
 			case 6:
 				dir = rc_getstr("romdir");
+#ifdef DINGOO_OPENDINGUX
+				dir = menu_checkdir(dir,getenv("HOME"));
+#endif /* DINGOO_OPENDINGUX */
 				if(loadrom = menu_requestfile(NULL,"Select Rom",dir,"gb;gbc;zip;gbz")) {
 					loader_unload();
 					ohb_loadrom(loadrom);
@@ -1404,6 +1425,10 @@ int launcher(){;
 	char *rom = 0;
 	char *dir = rc_getstr("romdir");
 	char version_str[80];
+	
+#ifdef DINGOO_OPENDINGUX
+	dir = menu_checkdir(dir,getenv("HOME"));
+#endif /* DINGOO_OPENDINGUX */
     
     snprintf(version_str, sizeof(version_str)-1, "gnuboy %s", VERSION);
 

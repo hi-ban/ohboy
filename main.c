@@ -1473,6 +1473,7 @@ void ohb_loadrom(char *rom){
 	loader_init(rom);
 	emu_reset();
 	vid_init();
+	scaler_init(0);
 }
 
 #ifdef DINGOO_BUILD

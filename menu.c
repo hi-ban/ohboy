@@ -701,12 +701,12 @@ int menu_options(){
 	if(speed>11) speed = 11;
 #ifdef DINGOO_SIM
 #else
-	romdir = rc_getstr("romdir");
-#endif /* DINGOO_SIM */
-
 #ifdef DINGOO_OPENDINGUX
-	romdir = menu_checkdir(romdir,getenv("HOME"));
+	romdir = menu_checkdir(rc_getstr("romdir"),getenv("HOME"));
+#else
+	romdir = rc_getstr("romdir");
 #endif /* DINGOO_OPENDINGUX */
+#endif /* DINGOO_SIM */
 
 	romdir = romdir ? strdup(romdir) : strdup(".");
 	
@@ -1382,9 +1382,10 @@ int menu(){
 				mexit=1;
 				break;
 			case 6:
-				dir = rc_getstr("romdir");
 #ifdef DINGOO_OPENDINGUX
-				dir = menu_checkdir(dir,getenv("HOME"));
+				dir = menu_checkdir(rc_getstr("romdir"),getenv("HOME"));
+#else
+				dir = rc_getstr("romdir");
 #endif /* DINGOO_OPENDINGUX */
 				if(loadrom = menu_requestfile(NULL,"Select Rom",dir,"gb;gbc;zip;gbz")) {
 					loader_unload();
@@ -1423,11 +1424,11 @@ int menu(){
 int launcher(){;
 
 	char *rom = 0;
-	char *dir = rc_getstr("romdir");
-	char version_str[80];
-	
+	char version_str[80];	
 #ifdef DINGOO_OPENDINGUX
-	dir = menu_checkdir(dir,getenv("HOME"));
+	char *dir = menu_checkdir(rc_getstr("romdir"),getenv("HOME"));
+#else
+	char *dir = rc_getstr("romdir");
 #endif /* DINGOO_OPENDINGUX */
     
     snprintf(version_str, sizeof(version_str)-1, "gnuboy %s", VERSION);

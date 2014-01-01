@@ -1,5 +1,9 @@
 This is an unofficial build. The changes over the official source are:
 
+(2014-01-01)
+- Fixed items not properly listed when displaying rom list.
+- Fixed bug with colors when using Scale3x upscaler.
+
 (2013-09-22)
 - Fixed crash in OpenDingux when a saved rom path no longer exists. (in that case now it defaults to $HOME).
 - Changed icon.

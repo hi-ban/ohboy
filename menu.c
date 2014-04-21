@@ -1387,7 +1387,7 @@ int menu(){
 #else
 				dir = rc_getstr("romdir");
 #endif /* DINGOO_OPENDINGUX */
-				if(loadrom = menu_requestfile(NULL,"Select Rom",dir,"gb;gbc;zip;gbz")) {
+				if(loadrom = menu_requestfile(NULL,"Select Rom",dir,"gb;gbc;zip;gz;gbz")) {
 					loader_unload();
 					ohb_loadrom(loadrom);
 					mexit=1;
@@ -1456,7 +1456,7 @@ launcher:
 
 	switch(dialog_end()){
 		case 1:
-			rom = menu_requestfile(NULL,"Select Rom",dir,"gb;gbc;zip;gbz");
+			rom = menu_requestfile(NULL,"Select Rom",dir,"gb;gbc;zip;gz;gbz");
 			if(!rom) goto launcher;
 			break;
 		case 2:

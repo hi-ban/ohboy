@@ -1214,6 +1214,14 @@ void ev_poll()
 			}
 #endif
 #ifdef DINGOO_OPENDINGUX
+#ifdef GCWZERO
+			} else if(event.key.keysym.sym==SDLK_HOME){
+				dvolume = 0;
+				osd_persist = 0;
+				hw.pad = 0;
+				menu();
+			}
+#else
 			} else if(event.key.keysym.sym==SDLK_TAB){
 				Uint8 *keystate = SDL_GetKeyState(NULL);
 				if ( keystate[SDLK_TAB] && keystate[SDLK_BACKSPACE] ){
@@ -1231,7 +1239,8 @@ void ev_poll()
 					menu();
 				}
 			}
-#endif
+#endif /*GCWZERO*/
+#endif /*DINGOO_OPENDINGUX*/
 #ifndef DINGOO_BUILD
 			} else if(event.key.keysym.sym==SDLK_ESCAPE){
 				dvolume = 0;

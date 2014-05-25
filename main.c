@@ -285,7 +285,6 @@ void vid_init() {
 	SDL_FreeSurface (bordersf);
 	vid_fb.first_paint = 1;	
 
-	
 	if (bmpenabled == 0){
 		bordersf = SDL_LoadBMP("etc"DIRSEP"black.bmp");}
 	else if (bmpenabled == 1)
@@ -297,6 +296,7 @@ void vid_init() {
 		if (hw.cgb){bordersf = SDL_LoadBMP(gbcborder);}
 		if (!hw.cgb){bordersf = SDL_LoadBMP(border);}
 #endif /*OHBOY_USE_SDL_IMAGE*/
+		if (upscaler >= 3) {bordersf = SDL_LoadBMP("etc"DIRSEP"black.bmp");}
 		#if defined(DINGOO_OPENDINGUX)
 		if (bordersf == NULL){                 /*Fix for flickering screen when borders are set to On but no border is loaded, and double buffer is used*/
 			bordersf = SDL_LoadBMP("etc"DIRSEP"black.bmp");
@@ -706,6 +706,143 @@ void ayla_scale15x(uint32_t *to, uint32_t *from)
         }
 }
 
+/*
+ * Approximately bilinear scaler, 160x144 to 280x240
+ *
+ * Copyright (C) 2014 hi-ban, Nebuleon <nebuleon.fumika@gmail.com>
+ *
+ * This function and all auxiliary functions are free software; you can
+ * redistribute them and/or modify them under the terms of the GNU Lesser
+ * General Public License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * These functions are distributed in the hope that they will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+// Support math
+#define Half(A) (((A) >> 1) & 0x7BEF)
+
+// Error correction expressions to piece back the lower bits together
+#define RestHalf(A) ((A) & 0x0821)
+
+// Error correction expressions for halves
+#define Corr1_1(A, B)     ((A) & (B) & 0x0821)
+
+// Halves
+#define Weight1_1(A, B)   (Half(A) + Half(B) + Corr1_1(A, B))
+
+/* Upscales a 160x144 image to 280x240 using an approximate bilinear
+ * resampling algorithm that only uses integer math.
+ *
+ * Input:
+ *   src: A packed 160x144 pixel image. The pixel format of this image is
+ *     RGB 565.
+ * Output:
+ *   dst: A packed 280x240 pixel image. The pixel format of this image is
+ *     RGB 565.
+ */
+
+void upscale_160x144_to_280x240_bilinearish(uint32_t* dst, uint32_t* src)
+{
+	uint16_t* Src16 = (uint16_t*) src;
+	uint16_t* Dst16 = (uint16_t*) dst;
+	// There are 40 blocks of 4 pixels horizontally, and 48 of 3 vertically.
+	// Each block of 4x3 becomes 7x5.
+	uint32_t BlockX, BlockY;
+	uint16_t* BlockSrc;
+	uint16_t* BlockDst;
+	for (BlockY = 0; BlockY < 48; BlockY++)
+	{
+		BlockSrc = Src16 + BlockY * 160 * 3;
+		BlockDst = Dst16 + BlockY * 320 * 5;
+		for (BlockX = 0; BlockX < 40; BlockX++)
+		{
+			/* Horizontally:
+			 * Before(4):
+			 * (a)(b)(c)(d)
+			 * After(7):
+			 * (a)(ab)(b)(bc)(c)(cd)(d)
+			 *
+			 * Vertically:
+			 * Before(3): After(5):
+			 * (a)       (a)
+			 * (b)       (ab)
+			 * (c)       (b)
+			 *           (bc)
+			 *           (c)
+
+			 */
+
+			// -- Row 1 --
+			uint16_t  _1 = *(BlockSrc               );
+			*(BlockDst               ) = _1;
+			uint16_t  _2 = *(BlockSrc            + 1);
+			*(BlockDst            + 1) = Weight1_1(_1, _2);
+			*(BlockDst            + 2) = _2;
+			uint16_t  _3 = *(BlockSrc            + 2);
+			*(BlockDst            + 3) = Weight1_1(_2, _3);
+			*(BlockDst            + 4) = _3;
+			uint16_t  _4 = *(BlockSrc            + 3);
+			*(BlockDst            + 5) = Weight1_1(_3, _4);
+			*(BlockDst            + 6) = _4;
+
+			// -- Row 2 --
+			uint16_t _5 = *(BlockSrc + 160 *  1    );
+			*(BlockDst + 320 *  1    ) = Weight1_1(_1, _5);
+			uint16_t _6 = *(BlockSrc + 160 *  1 + 1);
+			*(BlockDst + 320 *  1 + 1) = Weight1_1(Weight1_1(_1, _2), Weight1_1(_5, _6));
+			*(BlockDst + 320 *  1 + 2) = Weight1_1(_2, _6);
+			uint16_t _7 = *(BlockSrc + 160 *  1 + 2);
+			*(BlockDst + 320 *  1 + 3) = Weight1_1(Weight1_1(_2, _3), Weight1_1(_6, _7));
+			*(BlockDst + 320 *  1 + 4) = Weight1_1(_3, _7);
+			uint16_t _8 = *(BlockSrc + 160 *  1 + 3);
+			*(BlockDst + 320 *  1 + 5) = Weight1_1(Weight1_1(_3, _4), Weight1_1(_7, _8));
+			*(BlockDst + 320 *  1 + 6) = Weight1_1(_4, _8);
+			
+			// -- Row 3 --
+			*(BlockDst + 320 *  2    ) = _5;
+			*(BlockDst + 320 *  2 + 1) = Weight1_1(_5, _6);
+			*(BlockDst + 320 *  2 + 2) = _6;
+			*(BlockDst + 320 *  2 + 3) = Weight1_1(_6, _7);
+			*(BlockDst + 320 *  2 + 4) = _7;
+			*(BlockDst + 320 *  2 + 5) = Weight1_1(_7, _8);
+			*(BlockDst + 320 *  2 + 6) = _8;
+
+			// -- Row 4 --
+			uint16_t _9 = *(BlockSrc + 160 *  2    );
+			*(BlockDst + 320 *  3    ) = Weight1_1(_5, _9);
+			uint16_t _10 = *(BlockSrc + 160 *  2 + 1);
+			*(BlockDst + 320 *  3 + 1) = Weight1_1(Weight1_1(_5, _6), Weight1_1(_9, _10));
+			*(BlockDst + 320 *  3 + 2) = Weight1_1(_6, _10);
+			uint16_t _11 = *(BlockSrc + 160 *  2 + 2);
+			*(BlockDst + 320 *  3 + 3) = Weight1_1(Weight1_1(_6, _7), Weight1_1(_10, _11));
+			*(BlockDst + 320 *  3 + 4) = Weight1_1(_7, _11);
+			uint16_t _12 = *(BlockSrc + 160 *  2 + 3);
+			*(BlockDst + 320 *  3 + 5) = Weight1_1(Weight1_1(_7, _8), Weight1_1(_11, _12));
+			*(BlockDst + 320 *  3 + 6) = Weight1_1(_8, _12);
+
+			// -- Row 5 --
+			*(BlockDst + 320 *  4    ) = _9;
+			*(BlockDst + 320 *  4 + 1) = Weight1_1(_9, _10);
+			*(BlockDst + 320 *  4 + 2) = _10;
+			*(BlockDst + 320 *  4 + 3) = Weight1_1(_10, _11);
+			*(BlockDst + 320 *  4 + 4) = _11;
+			*(BlockDst + 320 *  4 + 5) = Weight1_1(_11, _12);
+			*(BlockDst + 320 *  4 + 6) = _12;
+
+			BlockSrc += 4;
+			BlockDst += 7;
+		}
+	}
+}
+
 /****************************************************************/
 
 /*
@@ -760,6 +897,16 @@ void ohb_ayla_scale15x(){
 	ayla_scale15x((uint32_t *) dst, (uint32_t *) src);
 }
 
+void ohb_scale_aspect(){
+    /* bilinearish scaler */
+
+	un16 *src = (un16 *) fb.ptr;
+	un16 *dst = (un16*)vid_fb.ptr + 20;
+	int x,y;
+
+	upscale_160x144_to_280x240_bilinearish((uint32_t *) dst, (uint32_t *) src);
+}
+
 void scaler_init(int scaler_number){
 	switch (upscaler){
 		case 2: /* 1.5 scaler with some smoothing ala scale3x / scale2x */
@@ -770,6 +917,7 @@ void scaler_init(int scaler_number){
 			break;
 		case 1: /* Ayla's 1.5x scaler */
 		case 3: /* Ayla full screen 320x240 (no aspect ration preservation) */
+		case 4: /* Bilinearish scaler */
 		case 0: /* no scale, that is, native */
 		default:
 			/* RGB565 */
@@ -895,6 +1043,18 @@ void vid_begin(){
 			SDL_BlitSurface(bordersf, &border1, screen, NULL);   /*Paints the border image two times*/
 			#endif /*DINGOO_OPENDINGUX*/
 		}
+		if (upscaler == 4) {
+			SDL_Rect border1;
+			border1.x=0;
+			border1.y=0;
+			border1.w=320;
+			border1.h=240;
+			SDL_BlitSurface(bordersf, &border1, screen, NULL);
+			#if defined(DINGOO_OPENDINGUX)
+			SDL_Flip(screen);                                    /*Fix for flickering borders with double buffer*/
+			SDL_BlitSurface(bordersf, &border1, screen, NULL);   /*Paints the border image two times*/
+			#endif /*DINGOO_OPENDINGUX*/
+		}
 		vid_fb.first_paint = 0;
 		vid_fb.dirty = 0;
 	} 
@@ -963,6 +1123,9 @@ void vid_end() {
 				break;
 			case 3:
 				ohb_ayla_dingoo_scale();
+				break;
+			case 4:
+				ohb_scale_aspect();
 				break;
 			case 0:
 			default:

@@ -638,7 +638,7 @@ const char *lbutton_y[] = {"None","Button A","Button B","Select","Start","Reset"
 const char *lbutton_l[] = {"None","Button A","Button B","Select","Start","Reset","Quit",NULL};
 const char *lbutton_r[] = {"None","Button A","Button B","Select","Start","Reset","Quit",NULL};
 const char *lcolorfilter[] = {"Off","On","GBC Only",NULL};
-const char *lupscaler[] = {"Native (No scale)", "Ayla 1.5x Upscaler", "Scale3x+Sample.75x", "Ayla Fullscreen", NULL};
+const char *lupscaler[] = {"Native (No scale)", "Ayla 1.5x Upscaler", "Scale3x+Sample.75x", "Ayla Fullscreen", "FS Aspect", NULL};
 const char *lframeskip[] = {"Auto","Off","1","2","3","4",NULL};
 const char *lsdl_showfps[] = {"Off","On",NULL};
 const char *lborderon[] = {"Off","Image File","BG Color",NULL};
@@ -1354,8 +1354,12 @@ int menu(){
 		dialog_begin(rom.name,"Slide Power to open the menu");
 #endif
 #ifdef DINGOO_OPENDINGUX
+#ifdef GCWZERO
+		dialog_begin(rom.name,"Slide Power to open the menu");
+#else
 		dialog_begin(rom.name,"Press L+R to open the menu");
-#endif
+#endif /*GCWZERO*/
+#endif /*DINGOO_OPENDINGUX*/
 #ifdef CAANOO
 		dialog_begin(rom.name,"Press Home to open the menu");
 #endif

@@ -1447,8 +1447,12 @@ launcher:
 	dialog_begin("OHBOY","Slide Power to open the menu");
 #endif
 #ifdef DINGOO_OPENDINGUX
+#ifdef GCWZERO
+	dialog_begin("OHBOY","Slide Power to open the menu");
+#else
 	dialog_begin("OHBOY","Press L+R to open the menu");
-#endif
+#endif /*GCWZERO*/
+#endif /*DINGOO_OPENDINGUX*/
 #ifdef CAANOO
 	dialog_begin("OHBOY","Press Home to open the menu");
 #endif

@@ -631,12 +631,12 @@ char *ldmgfilters[] = {
 /*#################################################################################*/
 
 
-const char *lbutton_a[] = {"None","Button A","Button B","Select","Start","Reset","Quit",NULL};
-const char *lbutton_b[] = {"None","Button A","Button B","Select","Start","Reset","Quit",NULL};
-const char *lbutton_x[] = {"None","Button A","Button B","Select","Start","Reset","Quit",NULL};
-const char *lbutton_y[] = {"None","Button A","Button B","Select","Start","Reset","Quit",NULL};
-const char *lbutton_l[] = {"None","Button A","Button B","Select","Start","Reset","Quit",NULL};
-const char *lbutton_r[] = {"None","Button A","Button B","Select","Start","Reset","Quit",NULL};
+const char *lbutton_a[] = {"None","Button A","Button B","Select","Start","Reset","Quit","Quick Save","Quick Load",NULL};
+const char *lbutton_b[] = {"None","Button A","Button B","Select","Start","Reset","Quit","Quick Save","Quick Load",NULL};
+const char *lbutton_x[] = {"None","Button A","Button B","Select","Start","Reset","Quit","Quick Save","Quick Load",NULL};
+const char *lbutton_y[] = {"None","Button A","Button B","Select","Start","Reset","Quit","Quick Save","Quick Load",NULL};
+const char *lbutton_l[] = {"None","Button A","Button B","Select","Start","Reset","Quit","Quick Save","Quick Load",NULL};
+const char *lbutton_r[] = {"None","Button A","Button B","Select","Start","Reset","Quit","Quick Save","Quick Load",NULL};
 const char *lcolorfilter[] = {"Off","On","GBC Only",NULL};
 #ifdef GCWZERO
 const char *lupscaler[] = {"Native (No scale)", "Software 1.5x", "Scale3x+Sample.75x", "Software 1.666x", "Software Fullscreen", "Hardware 1.5x", "Hardware 1.666x", "Hardware FullScreen", NULL};
@@ -1121,6 +1121,20 @@ int menu_controls(){
 			    if (btny == 6) {sprintf(config[10],"bind joy3 quit");}
 			    if (btnl == 6) {sprintf(config[11],"bind joy4 quit");}
 			    if (btnr == 6) {sprintf(config[12],"bind joy5 quit");}
+				
+				if (btna == 7) {sprintf(config[7],"bind joy0 savestate");}
+			    if (btnb == 7) {sprintf(config[8],"bind joy2 savestate");}
+			    if (btnx == 7) {sprintf(config[9],"bind joy1 savestate");}
+			    if (btny == 7) {sprintf(config[10],"bind joy3 savestate");}
+			    if (btnl == 7) {sprintf(config[11],"bind joy4 savestate");}
+			    if (btnr == 7) {sprintf(config[12],"bind joy5 savestate");}
+				
+				if (btna == 8) {sprintf(config[7],"bind joy0 loadstate");}
+			    if (btnb == 8) {sprintf(config[8],"bind joy2 loadstate");}
+			    if (btnx == 8) {sprintf(config[9],"bind joy1 loadstate");}
+			    if (btny == 8) {sprintf(config[10],"bind joy3 loadstate");}
+			    if (btnl == 8) {sprintf(config[11],"bind joy4 loadstate");}
+			    if (btnr == 8) {sprintf(config[12],"bind joy5 loadstate");}
 			#endif
 			#if defined(DINGOO_BUILD)
 			#if defined(GCWZERO)
@@ -1172,6 +1186,20 @@ int menu_controls(){
 			    if (btny == 6) {sprintf(config[10],"bind space quit");}
 			    if (btnl == 6) {sprintf(config[11],"bind tab quit");}
 			    if (btnr == 6) {sprintf(config[12],"bind backspace quit");}
+				
+				if (btna == 7) {sprintf(config[7],"bind ctrl savestate");}
+			    if (btnb == 7) {sprintf(config[8],"bind alt savestate");}
+			    if (btnx == 7) {sprintf(config[9],"bind shift savestate");}
+			    if (btny == 7) {sprintf(config[10],"bind space savestate");}
+			    if (btnl == 7) {sprintf(config[11],"bind tab savestate");}
+			    if (btnr == 7) {sprintf(config[12],"bind backspace savestate");}
+				
+				if (btna == 8) {sprintf(config[7],"bind ctrl loadstate");}
+			    if (btnb == 8) {sprintf(config[8],"bind alt loadstate");}
+			    if (btnx == 8) {sprintf(config[9],"bind shift loadstate");}
+			    if (btny == 8) {sprintf(config[10],"bind space loadstate");}
+			    if (btnl == 8) {sprintf(config[11],"bind tab loadstate");}
+			    if (btnr == 8) {sprintf(config[12],"bind backspace loadstate");}
 			#else
 			    if (btna == 0) {sprintf(config[7],"unbind ctrl");}
 			    if (btnb == 0) {sprintf(config[8],"unbind alt");}
@@ -1221,6 +1249,20 @@ int menu_controls(){
 			    if (btny == 6) {sprintf(config[10],"bind shift quit");}
 			    if (btnl == 6) {sprintf(config[11],"bind tab quit");}
 			    if (btnr == 6) {sprintf(config[12],"bind backspace quit");}
+				
+				if (btna == 7) {sprintf(config[7],"bind ctrl savestate");}
+			    if (btnb == 7) {sprintf(config[8],"bind alt savestate");}
+			    if (btnx == 7) {sprintf(config[9],"bind space savestate");}
+			    if (btny == 7) {sprintf(config[10],"bind shift savestate");}
+			    if (btnl == 7) {sprintf(config[11],"bind tab savestate");}
+			    if (btnr == 7) {sprintf(config[12],"bind backspace savestate");}
+				
+				if (btna == 8) {sprintf(config[7],"bind ctrl loadstate");}
+			    if (btnb == 8) {sprintf(config[8],"bind alt loadstate");}
+			    if (btnx == 8) {sprintf(config[9],"bind space loadstate");}
+			    if (btny == 8) {sprintf(config[10],"bind shift loadstate");}
+			    if (btnl == 8) {sprintf(config[11],"bind tab loadstate");}
+			    if (btnr == 8) {sprintf(config[12],"bind backspace loadstate");}
 			#endif /* GCWZERO */
 			#endif /* DINGOO_BUILD */
 			#if defined(WIZ) || defined(GP2X_ONLY)
@@ -1272,6 +1314,20 @@ int menu_controls(){
 			    if (btny == 6) {sprintf(config[10],"bind joy15 quit");}
 			    if (btnl == 6) {sprintf(config[11],"bind joy10 quit");}
 			    if (btnr == 6) {sprintf(config[12],"bind joy11 quit");}
+				
+				if (btna == 7) {sprintf(config[7],"bind joy12 savestate");}
+			    if (btnb == 7) {sprintf(config[8],"bind joy13 savestate");}
+			    if (btnx == 7) {sprintf(config[9],"bind joy14 savestate");}
+			    if (btny == 7) {sprintf(config[10],"bind joy15 savestate");}
+			    if (btnl == 7) {sprintf(config[11],"bind joy10 savestate");}
+			    if (btnr == 7) {sprintf(config[12],"bind joy11 savestate");}
+				
+				if (btna == 8) {sprintf(config[7],"bind joy12 loadstate");}
+			    if (btnb == 8) {sprintf(config[8],"bind joy13 loadstate");}
+			    if (btnx == 8) {sprintf(config[9],"bind joy14 loadstate");}
+			    if (btny == 8) {sprintf(config[10],"bind joy15 loadstate");}
+			    if (btnl == 8) {sprintf(config[11],"bind joy10 loadstate");}
+			    if (btnr == 8) {sprintf(config[12],"bind joy11 loadstate");}
 			#endif
 			for(i=0; i<13; i++)
 				rc_command(config[i]);

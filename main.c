@@ -305,6 +305,76 @@ void vid_init() {
 	}
 }
 
+void paint_menu_bg() {
+
+	pixmap_t *pix;
+
+	#ifdef UBYTE_USE_LIBPNG
+	#ifdef DINGOO_SIM
+		/* do nothing */
+	#else
+		pix = pixmap_loadpng("etc"DIRSEP"launch.png");
+
+		if(pix){
+			SDL_LockSurface(screen);
+			x = (screen->w - pix->width)/2;
+			y = (screen->h - pix->height)/2;
+			osd_drawpixmap(pix,x,y,0);
+			pixmap_free(pix);
+			SDL_UnlockSurface(screen);
+		}
+	#endif /* DINGOO_SIM */
+	#else
+		/*
+		** Use SDL_LoadBMP() from base SDL 
+		** TODO use IMG_Load() from SDL_image
+		*/
+		
+		SDL_Surface *tmp_surface=NULL;
+	#ifdef DINGOO_SIM
+		/* do nothing */
+	#else
+		tmp_surface = SDL_LoadBMP("etc"DIRSEP"launch.bmp");
+
+		if (tmp_surface)
+		{
+			bgimage_bitmap_surface = SDL_DisplayFormat(tmp_surface);
+			SDL_FreeSurface(tmp_surface);
+			if (bgimage_bitmap_surface)
+			{
+				/*
+				SDL_Rect src, dest;
+				
+				src.x = 0;
+				src.y = 0;
+				src.w = bgimage_bitmap_surface->w;
+				src.h = bgimage_bitmap_surface->h;
+				 
+				dest.x = 0;
+				dest.y = 0;
+				dest.w = bgimage_bitmap_surface->w;
+				dest.h = bgimage_bitmap_surface->h;
+				*/
+				
+				SDL_UnlockSurface(screen);
+				SDL_BlitSurface(bgimage_bitmap_surface, NULL, screen, NULL);
+				/*
+				SDL_BlitSurface(bgimage_bitmap_surface, &src, screen, &dest);
+				*/
+				SDL_Flip(screen);                                              /*Fix for launch BMP not showing when using double buffer*/
+				SDL_BlitSurface(bgimage_bitmap_surface, NULL, screen, NULL);   /*Paints the launch BMP two times*/
+				
+				SDL_FreeSurface(bgimage_bitmap_surface);
+				SDL_Flip(screen);
+				/*
+				SDL_LockSurface(screen);  // for some reason this prevents SFont from displaying.....
+				*/
+			}
+		}
+	#endif /* DINGOO_SIM */
+	#endif /* UBYTE_USE_LIBPNG */
+}
+
 void vid_setpal(int i, int r, int g, int b){
     /*
     **  complete NOOP
@@ -1520,6 +1590,7 @@ void ev_poll()
 				osd_persist = 0;
 				hw.pad = 0;
 				VideoExitGame();
+				paint_menu_bg();
 				menu();
 				VideoEnterGame();
 			}
@@ -1808,7 +1879,6 @@ int main(int argc, char *argv[]){
 	FILE *config;
 	char *rom=NULL;
 	int x, y;
-	pixmap_t *pix;
 	char *cpu;
 	char *tmp_buf=NULL;
 
@@ -2076,70 +2146,7 @@ int main(int argc, char *argv[]){
 #endif /* DINGOO_OPENDINGUX */
 #endif /* DINGOO_SIM */
 
-#ifdef UBYTE_USE_LIBPNG
-#ifdef DINGOO_SIM
-	/* do nothing */
-#else
-	pix = pixmap_loadpng("etc"DIRSEP"launch.png");
-
-	if(pix){
-		SDL_LockSurface(screen);
-		x = (screen->w - pix->width)/2;
-		y = (screen->h - pix->height)/2;
-		osd_drawpixmap(pix,x,y,0);
-		pixmap_free(pix);
-		SDL_UnlockSurface(screen);
-	}
-#endif /* DINGOO_SIM */
-#else
-    /*
-    ** Use SDL_LoadBMP() from base SDL 
-    ** TODO use IMG_Load() from SDL_image
-    */
-    
-    SDL_Surface *tmp_surface=NULL;
-#ifdef DINGOO_SIM
-	/* do nothing */
-#else
-    tmp_surface = SDL_LoadBMP("etc"DIRSEP"launch.bmp");
-
-    if (tmp_surface)
-    {
-        bgimage_bitmap_surface = SDL_DisplayFormat(tmp_surface);
-        SDL_FreeSurface(tmp_surface);
-        if (bgimage_bitmap_surface)
-        {
-            /*
-            SDL_Rect src, dest;
-            
-            src.x = 0;
-            src.y = 0;
-            src.w = bgimage_bitmap_surface->w;
-            src.h = bgimage_bitmap_surface->h;
-             
-            dest.x = 0;
-            dest.y = 0;
-            dest.w = bgimage_bitmap_surface->w;
-            dest.h = bgimage_bitmap_surface->h;
-            */
-            
-            SDL_UnlockSurface(screen);
-            SDL_BlitSurface(bgimage_bitmap_surface, NULL, screen, NULL);
-            /*
-            SDL_BlitSurface(bgimage_bitmap_surface, &src, screen, &dest);
-            */
-			SDL_Flip(screen);                                              /*Fix for launch BMP not showing when using double buffer*/
-			SDL_BlitSurface(bgimage_bitmap_surface, NULL, screen, NULL);   /*Paints the launch BMP two times*/
-			
-            SDL_FreeSurface(bgimage_bitmap_surface);
-            SDL_Flip(screen);
-            /*
-            SDL_LockSurface(screen);  // for some reason this prevents SFont from displaying.....
-            */
-        }
-    }
-#endif /* DINGOO_SIM */
-#endif /* UBYTE_USE_LIBPNG */
+	paint_menu_bg();
 
 #ifdef DINGOO_SIM
 	rom = argv[0];

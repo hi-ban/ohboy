@@ -87,6 +87,9 @@ static int button_a=2, button_b=1, button_x=0, button_y=0, button_l=0, button_r=
 #ifdef GNUBOY_HARDWARE_VOLUME
 static int  sndlvl=10;
 #endif /* GNBOY_HARDWARE_VOLUME */
+#ifdef GCWZERO
+static int alt_menu_combo=0;
+#endif /* GCWZERO */
 
 rcvar_t vid_exports[] =
 {
@@ -109,6 +112,9 @@ rcvar_t vid_exports[] =
 	RCV_INT("button_l", &button_l),
 	RCV_INT("button_r", &button_r),
 	RCV_INT("statesram", &statesram),
+#ifdef GCWZERO
+	RCV_INT("alt_menu_combo", &alt_menu_combo),
+#endif /* GCWZERO */
 	RCV_END
 };
 
@@ -1593,6 +1599,19 @@ void ev_poll()
 				paint_menu_bg();
 				menu();
 				VideoEnterGame();
+			} else if (alt_menu_combo == 1){
+				if((event.key.keysym.sym==SDLK_ESCAPE) || (event.key.keysym.sym==SDLK_RETURN)){
+					Uint8 *keystate = SDL_GetKeyState(NULL);
+					if ( keystate[SDLK_RETURN] && keystate[SDLK_ESCAPE] ){
+						dvolume = 0;
+						osd_persist = 0;
+						hw.pad = 0;
+						VideoExitGame();
+						paint_menu_bg();
+						menu();
+						VideoEnterGame();
+					}
+				}
 			}
 #else
 			} else if(event.key.keysym.sym==SDLK_TAB){

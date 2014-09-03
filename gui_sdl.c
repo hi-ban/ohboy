@@ -52,9 +52,9 @@ enum
 #endif
 
 #ifdef GP2X
-	if(GP2X_PollEvent(&event)) {
+	while (GP2X_PollEvent(&event)) {
 #else
-	if(SDL_PollEvent(&event)) {
+	while (SDL_PollEvent(&event)) {
 #endif
 
 #ifdef DINGOO_BUILD

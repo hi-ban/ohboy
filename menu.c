@@ -638,6 +638,7 @@ const char *lbutton_y[] = {"None","Button A","Button B","Select","Start","Reset"
 const char *lbutton_l[] = {"None","Button A","Button B","Select","Start","Reset","Quit","Quick Save","Quick Load",NULL};
 const char *lbutton_r[] = {"None","Button A","Button B","Select","Start","Reset","Quit","Quick Save","Quick Load",NULL};
 const char *lcolorfilter[] = {"Off","On","GBC Only",NULL};
+const char *lanalog_input[] = {"Disabled","Enabled",NULL};
 #ifdef GCWZERO
 const char *lalt_menu_combo[] = {"No","Select + Start",NULL};
 const char *lupscaler[] = {"Native (No scale)", "Software 1.5x", "Scale3x+Sample.75x", "Software 1.666x", "Software Fullscreen", "Hardware 1.5x", "Hardware 1.666x", "Hardware FullScreen", NULL};
@@ -1009,7 +1010,7 @@ int menu_options(){
 
 int menu_controls(){
 
-	int ret=0, i=0;
+	int ret=0, i=0, analog_input=0;
 #ifdef DINGOO_BUILD
 	int btna=1, btnb=2, btnx=0, btny=0, btnl=0, btnr=0;
 #ifdef GCWZERO
@@ -1027,6 +1028,7 @@ int menu_controls(){
 	btny = rc_getint("button_y");
 	btnl = rc_getint("button_l");
 	btnr = rc_getint("button_r");
+	analog_input = rc_getint("analog_input");
 #ifdef GCWZERO
 	alt_menu_combo = rc_getint("alt_menu_combo");
 #endif /* GCWZERO */
@@ -1063,22 +1065,23 @@ int menu_controls(){
 	dialog_option("Button L",lbutton_l,&btnl);               /* 7 */
 	dialog_option("Button R",lbutton_r,&btnr);               /* 8 */
 	dialog_text(NULL,NULL,0);                                /* 9 */
+	dialog_option("Analog Input",lanalog_input,&analog_input); /* 10 */
 #ifdef GCWZERO
-	dialog_option("Alt Menu Combo",lalt_menu_combo,&alt_menu_combo); /* 10 */
+	dialog_option("Alt Menu Combo",lalt_menu_combo,&alt_menu_combo); /* 11 */
 #else
-	dialog_text(NULL,NULL,0);                                /* 10 */
-#endif /* GCWZERO */
 	dialog_text(NULL,NULL,0);                                /* 11 */
-	dialog_text("Apply",NULL,FIELD_SELECTABLE);              /* 12 */
-	dialog_text("Apply & Save",NULL,FIELD_SELECTABLE);       /* 13 */
-	dialog_text("Cancel",NULL,FIELD_SELECTABLE);             /* 14 */
+#endif /* GCWZERO */
+	dialog_text(NULL,NULL,0);                                /* 12 */
+	dialog_text("Apply",NULL,FIELD_SELECTABLE);              /* 13 */
+	dialog_text("Apply & Save",NULL,FIELD_SELECTABLE);       /* 14 */
+	dialog_text("Cancel",NULL,FIELD_SELECTABLE);             /* 15 */
 
 	switch(ret=dialog_end()){
-		case 14: /* Cancel */
+		case 15: /* Cancel */
 			return ret;
 			break;
-		case 12: /* Apply */
-		case 13: /* Apply & Save */
+		case 13: /* Apply */
+		case 14: /* Apply & Save */
 		    sprintf(config[0],"#KEY BINDINGS#");
 			sprintf(config[1],"set button_a %i",btna);
 			sprintf(config[2],"set button_b %i",btnb);
@@ -1215,7 +1218,6 @@ int menu_controls(){
 			    if (btnl == 8) {sprintf(config[11],"bind tab loadstate");}
 			    if (btnr == 8) {sprintf(config[12],"bind backspace loadstate");}
 				
-				sprintf(config[13],"set alt_menu_combo %i",alt_menu_combo);
 			#else
 			    if (btna == 0) {sprintf(config[7],"unbind ctrl");}
 			    if (btnb == 0) {sprintf(config[8],"unbind alt");}
@@ -1345,12 +1347,18 @@ int menu_controls(){
 			    if (btnl == 8) {sprintf(config[11],"bind joy10 loadstate");}
 			    if (btnr == 8) {sprintf(config[12],"bind joy11 loadstate");}
 			#endif
-			for(i=0; i<14; i++)
+			sprintf(config[13],"set analog_input %i",analog_input);
+			#ifdef GCWZERO
+				sprintf(config[14],"set alt_menu_combo %i",alt_menu_combo);
+			#else
+				sprintf(config[14],"#slot used by gcw-zero port#");
+			#endif /* GCWZERO */
+			for(i=0; i<15; i++)
 				rc_command(config[i]);
 
 			pal_dirty();
 
-			if (ret == 13){ /* Apply & Save */
+			if (ret == 14){ /* Apply & Save */
 #ifdef DINGOO_SIM
 				file = fopen("a:"DIRSEP"ohboy"DIRSEP"bindings.rc","w");
 #else
@@ -1364,7 +1372,7 @@ int menu_controls(){
 				file = fopen("bindings.rc","w");
 #endif /* DINGOO_OPENDINGUX */
 #endif /* DINGOO_SIM */
-				for(i=0; i<14; i++){
+				for(i=0; i<15; i++){
 					fputs(config[i],file);
 					fputs("\n",file);
 				}

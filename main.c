@@ -73,7 +73,7 @@ SDL_Rect myrect;
 static font_t *font;
 
 struct fb fb;
-static int upscaler=0, frameskip=0, sdl_showfps=0, cpu_speed=0, bmpenabled=0, statesram=1;
+static int upscaler=0, frameskip=0, sdl_showfps=0, cpu_speed=0, bmpenabled=0, statesram=1, analog_input=1;
 static char* romdir=0, pal=0;
 char *border;
 char *gbcborder;
@@ -112,6 +112,7 @@ rcvar_t vid_exports[] =
 	RCV_INT("button_l", &button_l),
 	RCV_INT("button_r", &button_r),
 	RCV_INT("statesram", &statesram),
+	RCV_INT("analog_input", &analog_input),
 #ifdef GCWZERO
 	RCV_INT("alt_menu_combo", &alt_menu_combo),
 #endif /* GCWZERO */
@@ -1660,32 +1661,51 @@ void ev_poll()
 			ev.code = mapscancode(event.key.keysym.sym);
 			ev_postevent(&ev);
 			break;
+#ifndef DISABLE_JOYSTICK
 		case SDL_JOYAXISMOTION:
-			switch (event.jaxis.axis)
-			{
-			case 0: /* X axis */
-				axisval = event.jaxis.value;
-				if (axisval > joy_commit_range)
+			if (analog_input == 1){
+				switch (event.jaxis.axis)
 				{
-					if (Xstatus==2) break;
-
-					if (Xstatus==0)
+				case 0: /* X axis */
+					axisval = event.jaxis.value;
+					if (axisval > joy_commit_range)
 					{
-						ev.type = EV_RELEASE;
-						ev.code = K_JOYLEFT;
-        			  		ev_postevent(&ev);
+						if (Xstatus==2) break;
+
+						if (Xstatus==0)
+						{
+							ev.type = EV_RELEASE;
+							ev.code = K_JOYLEFT;
+								ev_postevent(&ev);
+						}
+
+						ev.type = EV_PRESS;
+						ev.code = K_JOYRIGHT;
+						ev_postevent(&ev);
+						Xstatus=2;
+						break;
 					}
 
-					ev.type = EV_PRESS;
-					ev.code = K_JOYRIGHT;
-					ev_postevent(&ev);
-					Xstatus=2;
-					break;
-				}
+					if (axisval < -(joy_commit_range))
+					{
+						if (Xstatus==0) break;
 
-				if (axisval < -(joy_commit_range))
-				{
-					if (Xstatus==0) break;
+						if (Xstatus==2)
+						{
+							ev.type = EV_RELEASE;
+							ev.code = K_JOYRIGHT;
+							ev_postevent(&ev);
+						}
+
+						ev.type = EV_PRESS;
+						ev.code = K_JOYLEFT;
+						ev_postevent(&ev);
+						Xstatus=0;
+						break;
+					}
+
+					/* if control reaches here, the axis is centered,
+					 * so just send a release signal if necisary */
 
 					if (Xstatus==2)
 					{
@@ -1694,55 +1714,55 @@ void ev_poll()
 						ev_postevent(&ev);
 					}
 
-					ev.type = EV_PRESS;
-					ev.code = K_JOYLEFT;
-					ev_postevent(&ev);
-					Xstatus=0;
-					break;
-				}
-
-				/* if control reaches here, the axis is centered,
-				 * so just send a release signal if necisary */
-
-				if (Xstatus==2)
-				{
-					ev.type = EV_RELEASE;
-					ev.code = K_JOYRIGHT;
-					ev_postevent(&ev);
-				}
-
-				if (Xstatus==0)
-				{
-					ev.type = EV_RELEASE;
-					ev.code = K_JOYLEFT;
-					ev_postevent(&ev);
-				}
-				Xstatus=1;
-				break;
-
-			case 1: /* Y axis*/
-				axisval = event.jaxis.value;
-				if (axisval > joy_commit_range)
-				{
-					if (Ystatus==2) break;
-
-					if (Ystatus==0)
+					if (Xstatus==0)
 					{
 						ev.type = EV_RELEASE;
-						ev.code = K_JOYUP;
+						ev.code = K_JOYLEFT;
 						ev_postevent(&ev);
 					}
-
-					ev.type = EV_PRESS;
-					ev.code = K_JOYDOWN;
-					ev_postevent(&ev);
-					Ystatus=2;
+					Xstatus=1;
 					break;
-				}
 
-				if (axisval < -joy_commit_range)
-				{
-					if (Ystatus==0) break;
+				case 1: /* Y axis*/
+					axisval = event.jaxis.value;
+					if (axisval > joy_commit_range)
+					{
+						if (Ystatus==2) break;
+
+						if (Ystatus==0)
+						{
+							ev.type = EV_RELEASE;
+							ev.code = K_JOYUP;
+							ev_postevent(&ev);
+						}
+
+						ev.type = EV_PRESS;
+						ev.code = K_JOYDOWN;
+						ev_postevent(&ev);
+						Ystatus=2;
+						break;
+					}
+
+					if (axisval < -joy_commit_range)
+					{
+						if (Ystatus==0) break;
+
+						if (Ystatus==2)
+						{
+							ev.type = EV_RELEASE;
+							ev.code = K_JOYDOWN;
+							ev_postevent(&ev);
+						}
+
+						ev.type = EV_PRESS;
+						ev.code = K_JOYUP;
+						ev_postevent(&ev);
+						Ystatus=0;
+						break;
+					}
+
+					/* if control reaches here, the axis is centered,
+					 * so just send a release signal if necisary */
 
 					if (Ystatus==2)
 					{
@@ -1751,31 +1771,15 @@ void ev_poll()
 						ev_postevent(&ev);
 					}
 
-					ev.type = EV_PRESS;
-					ev.code = K_JOYUP;
-					ev_postevent(&ev);
-					Ystatus=0;
+					if (Ystatus==0)
+					{
+						ev.type = EV_RELEASE;
+						ev.code = K_JOYUP;
+						ev_postevent(&ev);
+					}
+					Ystatus=1;
 					break;
 				}
-
-				/* if control reaches here, the axis is centered,
-				 * so just send a release signal if necisary */
-
-				if (Ystatus==2)
-				{
-					ev.type = EV_RELEASE;
-					ev.code = K_JOYDOWN;
-					ev_postevent(&ev);
-				}
-
-				if (Ystatus==0)
-				{
-					ev.type = EV_RELEASE;
-					ev.code = K_JOYUP;
-					ev_postevent(&ev);
-				}
-				Ystatus=1;
-				break;
 			}
 			break;
 		case SDL_JOYBUTTONUP:
@@ -1807,6 +1811,7 @@ void ev_poll()
 			ev.code = K_JOY0+event.jbutton.button;
 			ev_postevent(&ev);
 			break;
+#endif /* DISABLE_JOYSTICK */
 		case SDL_QUIT:
 			exit(1);
 			break;

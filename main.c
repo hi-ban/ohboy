@@ -296,7 +296,7 @@ void vid_init() {
 		if (hw.cgb){bordersf = SDL_LoadBMP(gbcborder);}
 		if (!hw.cgb){bordersf = SDL_LoadBMP(border);}
 #endif /*OHBOY_USE_SDL_IMAGE*/
-		if (upscaler >= 3) {bordersf = SDL_LoadBMP("etc"DIRSEP"black.bmp");}
+		if ((upscaler == 3) || (upscaler == 4) || (upscaler == 7)) {bordersf = SDL_LoadBMP("etc"DIRSEP"black.bmp");}
 		#if defined(DINGOO_OPENDINGUX)
 		if (bordersf == NULL){                 /*Fix for flickering screen when borders are set to On but no border is loaded, and double buffer is used*/
 			bordersf = SDL_LoadBMP("etc"DIRSEP"black.bmp");
@@ -872,6 +872,48 @@ void ohb_no_scale(){
 	}
 }
 
+void ohb_hardware_15x_scale(){
+    /* Hardware scaling */
+
+	un16 *src = (un16 *) fb.ptr;
+	un16 *dst = (un16*) vid_fb.ptr + 1688;
+	int x=0, y=0;
+
+	for(y=0; y<144; y++){
+		memcpy(dst, src, 2*160);
+		src += 160;
+		dst += 208;
+	}
+}
+
+void ohb_hardware_1666x_scale(){
+    /* Hardware scaling */
+
+	un16 *src = (un16 *) fb.ptr;
+	un16 *dst = (un16*) vid_fb.ptr + 16;
+	int x=0, y=0;
+
+	for(y=0; y<144; y++){
+		memcpy(dst, src, 2*160);
+		src += 160;
+		dst += 192;
+	}
+}
+
+void ohb_hardware_fullscreen_scale(){
+    /* Hardware scaling */
+
+	un16 *src = (un16 *) fb.ptr;
+	un16 *dst = (un16*) vid_fb.ptr + 0;
+	int x=0, y=0;
+
+	for(y=0; y<144; y++){
+		memcpy(dst, src, 2*160);
+		src += 160;
+		dst += 160;
+	}
+}
+
 /*
 ** Assumes 16bpp. RGB565
 ** Assumes src pixels are in the same format as the dest pixels.
@@ -916,8 +958,13 @@ void scaler_init(int scaler_number){
 			fb.cc[2].r = screen->format->Bloss+2;
 			break;
 		case 1: /* Ayla's 1.5x scaler */
-		case 3: /* Ayla full screen 320x240 (no aspect ration preservation) */
-		case 4: /* Bilinearish scaler */
+		case 3: /* Bilinearish 1.666x scaler */
+		case 4: /* Ayla full screen 320x240 (no aspect ration preservation) */
+#ifdef GCWZERO
+		case 5: /* Hardware 1.5x scaler */
+		case 6: /* Hardware 1.666x scaler */
+		case 7: /* Hardware Fullscreen scaler */
+#endif
 		case 0: /* no scale, that is, native */
 		default:
 			/* RGB565 */
@@ -1043,7 +1090,7 @@ void vid_begin(){
 			SDL_BlitSurface(bordersf, &border1, screen, NULL);   /*Paints the border image two times*/
 			#endif /*DINGOO_OPENDINGUX*/
 		}
-		if (upscaler == 4) {
+		if (upscaler == 3) {
 			SDL_Rect border1;
 			border1.x=0;
 			border1.y=0;
@@ -1055,6 +1102,62 @@ void vid_begin(){
 			SDL_BlitSurface(bordersf, &border1, screen, NULL);   /*Paints the border image two times*/
 			#endif /*DINGOO_OPENDINGUX*/
 		}
+#ifdef GCWZERO
+		if (upscaler == 5) {
+			FILE* aspect_ratio_file = fopen("/sys/devices/platform/jz-lcd.0/keep_aspect_ratio", "w");
+			if (aspect_ratio_file)
+			{ 
+				fwrite("1", 1, 1, aspect_ratio_file);
+				fclose(aspect_ratio_file);
+			}
+			SDL_Rect border1;
+			border1.x=56;
+			border1.y=39;
+			border1.w=208;
+			border1.h=160;
+			SDL_BlitSurface(bordersf, &border1, screen, NULL);
+			#if defined(DINGOO_OPENDINGUX)
+			SDL_Flip(screen);                                    /*Fix for flickering borders with double buffer*/
+			SDL_BlitSurface(bordersf, &border1, screen, NULL);   /*Paints the border image two times*/
+			#endif /*DINGOO_OPENDINGUX*/
+		}
+		if (upscaler == 6) {
+			FILE* aspect_ratio_file = fopen("/sys/devices/platform/jz-lcd.0/keep_aspect_ratio", "w");
+			if (aspect_ratio_file)
+			{ 
+				fwrite("1", 1, 1, aspect_ratio_file);
+				fclose(aspect_ratio_file);
+			}
+			SDL_Rect border1;
+			border1.x=64;
+			border1.y=47;
+			border1.w=192;
+			border1.h=144;
+			SDL_BlitSurface(bordersf, &border1, screen, NULL);
+			#if defined(DINGOO_OPENDINGUX)
+			SDL_Flip(screen);                                    /*Fix for flickering borders with double buffer*/
+			SDL_BlitSurface(bordersf, &border1, screen, NULL);   /*Paints the border image two times*/
+			#endif /*DINGOO_OPENDINGUX*/
+		}
+		if (upscaler == 7) {
+			FILE* aspect_ratio_file = fopen("/sys/devices/platform/jz-lcd.0/keep_aspect_ratio", "w");
+			if (aspect_ratio_file)
+			{ 
+				fwrite("0", 1, 1, aspect_ratio_file);
+				fclose(aspect_ratio_file);
+			}
+			SDL_Rect border1;
+			border1.x=0;
+			border1.y=0;
+			border1.w=320;
+			border1.h=240;
+			SDL_BlitSurface(bordersf, &border1, screen, NULL);
+			#if defined(DINGOO_OPENDINGUX)
+			SDL_Flip(screen);                                    /*Fix for flickering borders with double buffer*/
+			SDL_BlitSurface(bordersf, &border1, screen, NULL);   /*Paints the border image two times*/
+			#endif /*DINGOO_OPENDINGUX*/
+		}
+#endif
 		vid_fb.first_paint = 0;
 		vid_fb.dirty = 0;
 	} 
@@ -1104,6 +1207,29 @@ void osd_volume(){
 	osd_drawrect(2+x,screen->h-font->height-2,w,font->height,gui_maprgb(0xFF,0xFF,0xFF), rounded);
 }
 
+void VideoEnterGame() {
+#ifdef GCWZERO
+	if (upscaler < 5) {
+		screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_DOUBLEBUF);
+	}
+	if (upscaler == 5) {
+		screen = SDL_SetVideoMode(208, 160, 16, SDL_HWSURFACE | SDL_DOUBLEBUF);
+	}
+	if (upscaler == 6) {
+		screen = SDL_SetVideoMode(192, 144, 16, SDL_HWSURFACE | SDL_DOUBLEBUF);
+	}
+	if (upscaler == 7) {
+		screen = SDL_SetVideoMode(160, 144, 16, SDL_HWSURFACE | SDL_DOUBLEBUF);
+	}
+#endif
+}
+
+void VideoExitGame() {
+#ifdef GCWZERO
+	screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_DOUBLEBUF);
+#endif
+}
+
 void vid_end() {
 	if(fb.enabled){
 		vid_fb.ptr = screen->pixels;
@@ -1122,11 +1248,22 @@ void vid_end() {
 				ohb_scale3x();
 				break;
 			case 3:
-				ohb_ayla_dingoo_scale();
-				break;
-			case 4:
 				ohb_scale_aspect();
 				break;
+			case 4:
+				ohb_ayla_dingoo_scale();
+				break;
+#ifdef GCWZERO
+			case 5:
+				ohb_hardware_15x_scale();
+				break;
+			case 6:
+				ohb_hardware_1666x_scale();
+				break;
+			case 7:
+				ohb_hardware_fullscreen_scale();
+				break;
+#endif
 			case 0:
 			default:
 				ohb_no_scale();
@@ -1382,7 +1519,9 @@ void ev_poll()
 				dvolume = 0;
 				osd_persist = 0;
 				hw.pad = 0;
+				VideoExitGame();
 				menu();
+				VideoEnterGame();
 			}
 #else
 			} else if(event.key.keysym.sym==SDLK_TAB){
@@ -2016,6 +2155,7 @@ int main(int argc, char *argv[]){
 	{
 		rom = launcher();
 	}
+	VideoEnterGame();
 #endif /* DINGOO_SIM */
 
 	memset(screen->pixels,0,screen->pitch*screen->h);

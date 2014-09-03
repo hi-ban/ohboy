@@ -638,7 +638,11 @@ const char *lbutton_y[] = {"None","Button A","Button B","Select","Start","Reset"
 const char *lbutton_l[] = {"None","Button A","Button B","Select","Start","Reset","Quit",NULL};
 const char *lbutton_r[] = {"None","Button A","Button B","Select","Start","Reset","Quit",NULL};
 const char *lcolorfilter[] = {"Off","On","GBC Only",NULL};
-const char *lupscaler[] = {"Native (No scale)", "Ayla 1.5x Upscaler", "Scale3x+Sample.75x", "Ayla Fullscreen", "1.666x Upscaler", NULL};
+#ifdef GCWZERO
+const char *lupscaler[] = {"Native (No scale)", "Software 1.5x", "Scale3x+Sample.75x", "Software 1.666x", "Software Fullscreen", "Hardware 1.5x", "Hardware 1.666x", "Hardware FullScreen", NULL};
+#else
+const char *lupscaler[] = {"Native (No scale)", "Ayla 1.5x Upscaler", "Scale3x+Sample.75x", "1.666x Upscaler", "Ayla Fullscreen", NULL};
+#endif /* GCW ZERO */
 const char *lframeskip[] = {"Auto","Off","1","2","3","4",NULL};
 const char *lsdl_showfps[] = {"Off","On",NULL};
 const char *lborderon[] = {"Off","Image File","BG Color",NULL};

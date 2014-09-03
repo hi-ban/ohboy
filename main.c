@@ -1291,7 +1291,7 @@ void vid_end() {
             fps_current_count++;
             if (sdl_showfps == 1)
             {
-                snprintf(fps_str, 19, "%d FPS", fps_last_count);
+                snprintf(fps_str, 19, "%02d", fps_last_count);
 				myrect.w = SFont_TextWidth(fps_font, fps_str);
                 SDL_FillRect(screen, &myrect, 0 );
             }

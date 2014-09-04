@@ -80,7 +80,7 @@ enum
 					ev->key = GUI_RIGHT;
 					break;
 				default:
-					return 0;
+					continue;
 			}
 			return 1;
 		}
@@ -108,7 +108,7 @@ enum
 					ev->key = GUI_RIGHT;
 					break;
 				default:
-					return 0;
+					continue;
 			}
 			return 1;
 		}
@@ -136,7 +136,7 @@ enum
 					ev->key = GUI_RIGHT;
 					break;
 				default:
-					return 0;
+					continue;
 			}
 			return 1;
 		}
@@ -166,7 +166,7 @@ enum
 				default:
 					if (event.type == SDL_KEYUP && event.key.keysym.sym == SCREENSHOT_SDL_KEY)
 						TakeScreenShot((SDL_Surface *) NULL, (char *) NULL);
-					return 0;
+					continue;
 			}
 			return 1;
 		}

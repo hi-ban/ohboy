@@ -135,8 +135,14 @@ rcvar_t pcm_exports[] =
 #endif /* GNUBOY_DISABLE_SDL_SOUND */
 
 #define PCM_BUFFER 4096
-#define PCM_FRAME 512
 #define PCM_SAMPLERATE 44100
+#ifdef GCWZERO
+#define PCM_FRAME 1024
+#define VOL_MULTIPLIER 4
+#else
+#define PCM_FRAME 512
+#define VOL_MULTIPLIER 1
+#endif /* GCWZERO */
 
 #define UP_MASK 	0x83
 #define DOWN_MASK 	0x38
@@ -1454,7 +1460,7 @@ return 0; /* no sound */
 
 	while(pcm.pos){
 		sample = (*src++) - 128;
-		sample = sample * pcm_soft_volume;
+		sample = sample * pcm_soft_volume * VOL_MULTIPLIER;
 		*(pcm_head++) = sample;
 		pcm.pos--;
 	}

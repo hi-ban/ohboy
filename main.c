@@ -138,7 +138,7 @@ rcvar_t pcm_exports[] =
 #define PCM_SAMPLERATE 44100
 #ifdef GCWZERO
 #define PCM_FRAME 1024
-#define VOL_MULTIPLIER 4
+#define VOL_MULTIPLIER 3
 #else
 #define PCM_FRAME 512
 #define VOL_MULTIPLIER 1

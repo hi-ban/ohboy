@@ -134,13 +134,14 @@ rcvar_t pcm_exports[] =
 #endif /* OHBOY_DISABLE_SDL_SOUND */
 #endif /* GNUBOY_DISABLE_SDL_SOUND */
 
-#define PCM_BUFFER 4096
 #define PCM_SAMPLERATE 44100
 #ifdef GCWZERO
+#define PCM_BUFFER 2048
 #define PCM_FRAME 1024
 #define VOL_MULTIPLIER 3
 #else
-#define PCM_FRAME 512
+#define PCM_BUFFER 3072
+#define PCM_FRAME 1024
 #define VOL_MULTIPLIER 1
 #endif /* GCWZERO */
 

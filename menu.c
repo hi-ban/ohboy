@@ -657,6 +657,7 @@ const char *lclockspeeds[] = { "Default", "200 mhz", "250 mhz", "300 mhz", "336 
 #endif
 const char *lsndlvl[] = {"0%", "10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%", NULL};
 const char *lstatesram[] = {"Off","Default (On)",NULL};
+const char *lsystemmode[] = {"Auto","DMG Mode","GBA Enhanced",NULL};
 
 
 
@@ -665,7 +666,7 @@ static char config[24][256];
 int menu_options(){
 
 	struct filt_s *filtp=0;
-	int filt=0, skip=0, ret=0, cfilter=0, sfps=0, upscale=0, speed=0, i=0, sndlvl=10, statesram=1, borderon=0;
+	int filt=0, skip=0, ret=0, cfilter=0, sfps=0, upscale=0, speed=0, i=0, sndlvl=10, statesram=1, borderon=0, systemmode=0;
 	char *romdir=0, *romtemp=0, *paldir=0, *loadpal=0, *pal=0, *paltemp=0, *palname=0, *borderdir=0, *loadborder=0, *border=0, *bordertemp=0, *bordername=0, *gbcborder=0, *gbcbordertemp=0, *gbcbordername=0;
 
 	FILE *file;
@@ -697,6 +698,7 @@ int menu_options(){
 	sndlvl = rc_getint("sndlvl");
 	statesram = rc_getint("statesram");
 	borderon = rc_getint("bmpenabled");
+	systemmode = rc_getint("systemmode");
 	
 #ifdef DINGOO_NATIVE
 	speed = 0;
@@ -781,10 +783,11 @@ int menu_options(){
 	dialog_text("Volume", "Default", 0);                        /* 12 */ /* this is not the OSD volume.. */
 #endif /* GNBOY_HARDWARE_VOLUME */
 	dialog_option("State SRAM",lstatesram,&statesram);          /* 13 */
-	dialog_text(NULL,NULL,0);                                   /* 14 */
-	dialog_text("Apply",NULL,FIELD_SELECTABLE);                 /* 15 */
-	dialog_text("Apply & Save",NULL,FIELD_SELECTABLE);          /* 16 */
-	dialog_text("Cancel",NULL,FIELD_SELECTABLE);                /* 17 */
+	dialog_option("System",lsystemmode,&systemmode);            /* 14 */
+	dialog_text(NULL,NULL,0);                                   /* 15 */
+	dialog_text("Apply",NULL,FIELD_SELECTABLE);                 /* 16 */
+	dialog_text("Apply & Save",NULL,FIELD_SELECTABLE);          /* 17 */
+	dialog_text("Cancel",NULL,FIELD_SELECTABLE);                /* 18 */
 
 
 	switch(ret=dialog_end()){
@@ -827,11 +830,11 @@ int menu_options(){
 				romdir = romtemp;
 			}
 			goto start;
-		case 17: /* Cancel */
+		case 18: /* Cancel */
 			return ret;
 			break;
-		case 15: /* Apply */
-		case 16: /* Apply & Save */
+		case 16: /* Apply */
+		case 17: /* Apply & Save */
 			#ifdef GNUBOY_HARDWARE_VOLUME
 			pcm_volume(sndlvl * 10);
 			#endif /* GNBOY_HARDWARE_VOLUME */
@@ -969,13 +972,24 @@ int menu_options(){
 			sprintf(config[14],"set blue 0x%.6x 0x%.6x 0x%.6x 0x%.6x", filtp->blue[0], filtp->blue[1], filtp->blue[2], filtp->blue[3]);
 			sprintf(config[15], "set sndlvl %i", sndlvl);
 			sprintf(config[16], "set statesram %i", statesram);
+			sprintf(config[17], "set systemmode %i", systemmode);
+			if(systemmode == 0){
+				sprintf(config[18], "set forcedmg 0");
+				sprintf(config[19], "set gbamode 0");
+			} else if(systemmode == 1){
+				sprintf(config[18], "set forcedmg 1");
+				sprintf(config[19], "set gbamode 0");
+			} else if(systemmode == 2){
+				sprintf(config[18], "set forcedmg 0");
+				sprintf(config[19], "set gbamode 1");
+			}
 			
-			for(i=0; i<17; i++)
+			for(i=0; i<20; i++)
 				rc_command(config[i]);
 
 			pal_dirty();
 
-			if (ret == 16){ /* Apply & Save */
+			if (ret == 17){ /* Apply & Save */
 #ifdef DINGOO_SIM
 				file = fopen("a:"DIRSEP"ohboy"DIRSEP"ohboy.rc","w");
 #else
@@ -989,7 +1003,7 @@ int menu_options(){
 				file = fopen("ohboy.rc","w");
 #endif /* DINGOO_OPENDINGUX */
 #endif /* DINGOO_SIM */
-				for(i=0; i<17; i++){
+				for(i=0; i<20; i++){
 					fputs(config[i],file);
 					fputs("\n",file);
 				}

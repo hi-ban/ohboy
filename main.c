@@ -73,7 +73,7 @@ SDL_Rect myrect;
 static font_t *font;
 
 struct fb fb;
-static int upscaler=0, frameskip=0, sdl_showfps=0, cpu_speed=0, bmpenabled=0, statesram=1, analog_input=1;
+static int upscaler=0, frameskip=0, sdl_showfps=0, cpu_speed=0, bmpenabled=0, statesram=1, analog_input=1, systemmode=0;
 static char* romdir=0, pal=0;
 char *border;
 char *gbcborder;
@@ -116,6 +116,7 @@ rcvar_t vid_exports[] =
 #ifdef GCWZERO
 	RCV_INT("alt_menu_combo", &alt_menu_combo),
 #endif /* GCWZERO */
+	RCV_INT("systemmode", &systemmode),
 	RCV_END
 };
 

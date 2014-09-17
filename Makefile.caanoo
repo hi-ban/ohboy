@@ -28,8 +28,8 @@ LIBS = -lSDL -lz
 ################################## BUILD OPTIONS #######################################
 ##################### UNCOMMENT THE OPTIONS YOU WANT TO USE ############################
 
-#USE_SDL_IMAGE = True
-USE_LIBPNG = True
+USE_SDL_IMAGE = True
+#USE_LIBPNG = True
 USE_FREETYPE_TTF = True
 
 ########################################################################################

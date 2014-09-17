@@ -321,6 +321,7 @@ void vid_init() {
 
 void paint_menu_bg() {
 
+	int x, y;
 	pixmap_t *pix;
 
 	#ifdef UBYTE_USE_LIBPNG
@@ -1909,7 +1910,6 @@ char* exe_path_init(const char* inPath) {
 int main(int argc, char *argv[]){
 	FILE *config;
 	char *rom=NULL;
-	int x, y;
 	char *cpu;
 	char *tmp_buf=NULL;
 

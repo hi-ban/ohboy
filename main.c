@@ -93,30 +93,32 @@ static int alt_menu_combo=0;
 
 rcvar_t vid_exports[] =
 {
-#ifdef GNUBOY_HARDWARE_VOLUME
-	RCV_INT("sndlvl", &sndlvl),
-#endif /* GNBOY_HARDWARE_VOLUME */
-	RCV_INT("upscaler", &upscaler),
 	RCV_INT("frameskip", &frameskip),
 	RCV_INT("showfps", &sdl_showfps),
 	RCV_INT("cpuspeed",&cpu_speed),
+	RCV_STRING("romdir",&romdir),
+	RCV_INT("statesram", &statesram),
+	RCV_INT("systemmode", &systemmode),
+#ifdef GNUBOY_HARDWARE_VOLUME
+	RCV_INT("sndlvl", &sndlvl),
+#endif /* GNBOY_HARDWARE_VOLUME */
+	
+	RCV_STRING("palette",&pal),
+	RCV_INT("upscaler", &upscaler),
 	RCV_INT("bmpenabled", &bmpenabled),
 	RCV_STRING("border",&border),
 	RCV_STRING("gbcborder",&gbcborder),
-	RCV_STRING("romdir",&romdir),
-	RCV_STRING("palette",&pal),
+	
 	RCV_INT("button_a", &button_a),
 	RCV_INT("button_b", &button_b),
 	RCV_INT("button_x", &button_x),
 	RCV_INT("button_y", &button_y),
 	RCV_INT("button_l", &button_l),
-	RCV_INT("button_r", &button_r),
-	RCV_INT("statesram", &statesram),
+	RCV_INT("button_r", &button_r),	
 	RCV_INT("analog_input", &analog_input),
 #ifdef GCWZERO
 	RCV_INT("alt_menu_combo", &alt_menu_combo),
-#endif /* GCWZERO */
-	RCV_INT("systemmode", &systemmode),
+#endif /* GCWZERO */	
 	RCV_END
 };
 
@@ -2138,13 +2140,14 @@ int main(int argc, char *argv[]){
 #endif /* DINGOO_OPENDINGUX */
 #ifdef DINGOO_SIM
 	rc_sourcefile("a:"DIRSEP"ohboy"DIRSEP"ohboy.rc");
+	rc_sourcefile("a:"DIRSEP"ohboy"DIRSEP"video.rc");
 	rc_sourcefile("a:"DIRSEP"ohboy"DIRSEP"bindings.rc");
 	mkdir("a:"DIRSEP"ohboy"DIRSEP"saves", 0777); /* FIXME lookup "savedir" rc variable and mkdir that instead? */
 	mkdir("a:"DIRSEP"ohboy"DIRSEP"palettes", 0777);
 	mkdir("a:"DIRSEP"ohboy"DIRSEP"borders", 0777);
 #else
 #ifdef DINGOO_OPENDINGUX
-	static char *dir1, *dir2, *dir3, *dir4, *ohboyrc, *bindingsrc;
+	static char *dir1, *dir2, *dir3, *dir4, *ohboyrc, *videorc, *bindingsrc;
 	dir1 = malloc(strlen(getenv("HOME")) + 24);
 	sprintf(dir1, "%s/.ohboy/", getenv("HOME"));
 	mkdir(dir1, 0777);
@@ -2165,12 +2168,17 @@ int main(int argc, char *argv[]){
 	sprintf(ohboyrc, "%s/.ohboy/ohboy.rc", getenv("HOME"));
 	rc_sourcefile(ohboyrc);
 	free (ohboyrc);
+	videorc = malloc(strlen(getenv("HOME")) + 28);
+	sprintf(videorc, "%s/.ohboy/video.rc", getenv("HOME"));
+	rc_sourcefile(videorc);
+	free (videorc);
 	bindingsrc = malloc(strlen(getenv("HOME")) + 28);
 	sprintf(bindingsrc, "%s/.ohboy/bindings.rc", getenv("HOME"));
 	rc_sourcefile(bindingsrc);
 	free (bindingsrc);
 #else
 	rc_sourcefile("ohboy.rc");
+	rc_sourcefile("video.rc");
 	rc_sourcefile("bindings.rc");
 	mkdir("saves", 0777); /* FIXME lookup "savedir" rc variable and mkdir that instead? */
 	mkdir("palettes", 0777);

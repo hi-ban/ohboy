@@ -630,6 +630,25 @@ char *ldmgfilters[] = {
 
 /*#################################################################################*/
 
+const char *lframeskip[] = {"Auto","Off","1","2","3","4",NULL};
+const char *lsdl_showfps[] = {"Off","On",NULL};
+#if WIZ
+const char *lclockspeeds[] = {"Default","250 mhz","300 mhz","350 mhz","400 mhz","450 mhz","500 mhz","550 mhz","600 mhz","650 mhz","700 mhz","750 mhz",NULL};
+#endif
+#ifdef DINGOO_NATIVE
+const char *lclockspeeds[] = { "Default", "200 mhz", "250 mhz", "300 mhz", "336 mhz", "360 mhz", "400 mhz", NULL };
+#endif
+const char *lstatesram[] = {"Off","Default (On)",NULL};
+const char *lsystemmode[] = {"Auto","Force DMG Mode","Auto, GBA Enhanced",NULL};
+const char *lsndlvl[] = {"0%", "10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%", NULL};
+
+const char *lcolorfilter[] = {"Off","On","GBC Only",NULL};
+#ifdef GCWZERO
+const char *lupscaler[] = {"Native (No scale)", "Software 1.5x", "Scale3x+Sample.75x", "Software 1.666x", "Software Fullscreen", "Hardware 1.5x", "Hardware 1.666x", "Hardware FullScreen", NULL};
+#else
+const char *lupscaler[] = {"Native (No scale)", "Ayla 1.5x Upscaler", "Scale3x+Sample.75x", "1.666x Upscaler", "Ayla Fullscreen", NULL};
+#endif /* GCW ZERO */
+const char *lborderon[] = {"Off","Image File","BG Color",NULL};
 
 const char *lbutton_a[] = {"None","Button A","Button B","Select","Start","Reset","Quit","Quick Save","Quick Load",NULL};
 const char *lbutton_b[] = {"None","Button A","Button B","Select","Start","Reset","Quit","Quick Save","Quick Load",NULL};
@@ -637,37 +656,19 @@ const char *lbutton_x[] = {"None","Button A","Button B","Select","Start","Reset"
 const char *lbutton_y[] = {"None","Button A","Button B","Select","Start","Reset","Quit","Quick Save","Quick Load",NULL};
 const char *lbutton_l[] = {"None","Button A","Button B","Select","Start","Reset","Quit","Quick Save","Quick Load",NULL};
 const char *lbutton_r[] = {"None","Button A","Button B","Select","Start","Reset","Quit","Quick Save","Quick Load",NULL};
-const char *lcolorfilter[] = {"Off","On","GBC Only",NULL};
 const char *lanalog_input[] = {"Disabled","Enabled",NULL};
 #ifdef GCWZERO
 const char *lalt_menu_combo[] = {"No","Select + Start",NULL};
-const char *lupscaler[] = {"Native (No scale)", "Software 1.5x", "Scale3x+Sample.75x", "Software 1.666x", "Software Fullscreen", "Hardware 1.5x", "Hardware 1.666x", "Hardware FullScreen", NULL};
-#else
-const char *lupscaler[] = {"Native (No scale)", "Ayla 1.5x Upscaler", "Scale3x+Sample.75x", "1.666x Upscaler", "Ayla Fullscreen", NULL};
-#endif /* GCW ZERO */
-const char *lframeskip[] = {"Auto","Off","1","2","3","4",NULL};
-const char *lsdl_showfps[] = {"Off","On",NULL};
-const char *lborderon[] = {"Off","Image File","BG Color",NULL};
-
-#if WIZ
-const char *lclockspeeds[] = {"Default","250 mhz","300 mhz","350 mhz","400 mhz","450 mhz","500 mhz","550 mhz","600 mhz","650 mhz","700 mhz","750 mhz",NULL};
 #endif
-#ifdef DINGOO_NATIVE
-const char *lclockspeeds[] = { "Default", "200 mhz", "250 mhz", "300 mhz", "336 mhz", "360 mhz", "400 mhz", NULL };
-#endif
-const char *lsndlvl[] = {"0%", "10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%", NULL};
-const char *lstatesram[] = {"Off","Default (On)",NULL};
-const char *lsystemmode[] = {"Auto","DMG Mode","GBA Enhanced",NULL};
-
-
 
 static char config[24][256];
 
-int menu_options(){
+int menu_main_settings(){
 
-	struct filt_s *filtp=0;
-	int filt=0, skip=0, ret=0, cfilter=0, sfps=0, upscale=0, speed=0, i=0, sndlvl=10, statesram=1, borderon=0, systemmode=0;
-	char *romdir=0, *romtemp=0, *paldir=0, *loadpal=0, *pal=0, *paltemp=0, *palname=0, *borderdir=0, *loadborder=0, *border=0, *bordertemp=0, *bordername=0, *gbcborder=0, *gbcbordertemp=0, *gbcbordername=0;
+	int ret=0, i=0;
+	int skip=0, sfps=0, speed=0, statesram=1, systemmode=0;
+	int sndlvl=10;
+	char *romdir=0, *romtemp=0;
 
 	FILE *file;
 #ifdef DINGOO_NATIVE
@@ -682,23 +683,17 @@ int menu_options(){
     ** GB games can often be ran under the already
     ** underclocked Dingoo speed of 336Mhz
     */
-
     bool dingoo_clock_change_result;
 	uintptr_t tempCore=336000000; /* default Dingoo A320 clock speed */
 	uintptr_t tempMemory=112000000; /* default Dingoo A320 memory speed */
 	cpu_clock_get(&tempCore, &tempMemory);
 #endif /* DINGOO_NATIVE */
 
-	filt = findfilt();
-	cfilter = rc_getint("colorfilter");
-	if(cfilter && !rc_getint("filterdmg")) cfilter = 2;
-	upscale = rc_getint("upscaler");
 	skip = rc_getint("frameskip")+1;
 	sfps = rc_getint("showfps");
-	sndlvl = rc_getint("sndlvl");
 	statesram = rc_getint("statesram");
-	borderon = rc_getint("bmpenabled");
 	systemmode = rc_getint("systemmode");
+	sndlvl = rc_getint("sndlvl");
 	
 #ifdef DINGOO_NATIVE
 	speed = 0;
@@ -717,6 +712,164 @@ int menu_options(){
 #endif /* DINGOO_SIM */
 
 	romdir = romdir ? strdup(romdir) : strdup(".");
+	
+	start:
+
+	dialog_begin("Main Settings",NULL);
+
+	dialog_option("Frameskip",lframeskip,&skip);                /* 1 */
+	dialog_option("Show FPS",lsdl_showfps,&sfps);               /* 2 */
+#if defined(WIZ) || defined(DINGOO_NATIVE)
+	dialog_option("Clock Speed",lclockspeeds,&speed);           /* 3 */
+#else
+	dialog_text("Clock Speed","Default",0);                     /* 3 */
+#endif
+#ifdef DINGOO_SIM
+	dialog_text("Rom Path", "Default", 0);                      /* 4 */
+#else
+	dialog_text("Rom Path",romdir,FIELD_SELECTABLE);            /* 4 */
+#endif /* DINGOO_SIM */
+	dialog_option("State SRAM",lstatesram,&statesram);          /* 5 */
+	dialog_option("System",lsystemmode,&systemmode);            /* 6 */
+#ifdef GNUBOY_HARDWARE_VOLUME
+	dialog_option("Volume",lsndlvl,&sndlvl);                    /* 7 */ /* this is not the OSD volume.. */
+#else
+	dialog_text("Volume", "Default", 0);                        /* 7 */ /* this is not the OSD volume.. */
+#endif /* GNBOY_HARDWARE_VOLUME */
+	dialog_text(NULL,NULL,0);                                   /* 8 */
+	dialog_text("Apply",NULL,FIELD_SELECTABLE);                 /* 9 */
+	dialog_text("Apply & Save",NULL,FIELD_SELECTABLE);          /* 10 */
+	dialog_text("Cancel",NULL,FIELD_SELECTABLE);                /* 11 */
+
+
+	switch(ret=dialog_end()){
+		case 4: /* "Rom Path" romdir */
+			romtemp = menu_requestdir("Select Rom Directory",romdir);
+			if(romtemp){
+				free(romdir);
+				romdir = romtemp;
+			}
+			goto start;
+		case 11: /* Cancel */
+			return ret;
+			break;
+		case 9: /* Apply */
+		case 10: /* Apply & Save */
+			#ifdef GNUBOY_HARDWARE_VOLUME
+			pcm_volume(sndlvl * 10);
+			#endif /* GNBOY_HARDWARE_VOLUME */
+			if(speed)
+			{
+#ifdef DINGOO_NATIVE
+                /*
+                ** For now do NOT plug in into settings system, current
+                ** (Wiz) speed system is focused on multiples of 50Mhz.
+                ** Dingoo default clock speed is 336Mhz (CPU certified for
+                ** 360, 433MHz is supposed to be possible).
+                ** Only set clock speed if changed in options each and
+                ** everytime - do not use config file
+                */
+                --speed;
+                /* check menu response is withing the preset array range/size */
+                if (speed > (sizeof(dingoo_clock_speeds)/sizeof(uintptr_t) - 1) )
+                    speed = 0;
+                
+                tempCore = dingoo_clock_speeds[speed];
+                dingoo_clock_change_result = cpu_clock_set(tempCore);
+                
+                tempCore=tempMemory=0;
+                cpu_clock_get(&tempCore, &tempMemory); /* currently unused */
+                /* TODO display clock speed next to on screen FPS indicator */
+#endif /* DINGOO_NATIVE */
+    
+				speed = speed*50 + 200;
+			}
+			
+			sprintf(config[0],"set frameskip %i",skip-1);
+			sprintf(config[1],"set showfps %i",sfps);
+			sprintf(config[2],"set cpuspeed %i",speed);
+			#ifdef DINGOO_NATIVE /* FIXME Windows too..... if (DIRSEP_CHAR == '\\').... */
+			{
+				char tmp_path[PATH_MAX];
+				char *dest, *src;
+				dest = &tmp_path[0];
+				src = romdir;
+				
+				/* escape the path seperator (should escape other things too.) */
+				while(*dest = *src++)
+				{
+					if (*dest == DIRSEP_CHAR)
+					{
+						dest++;
+						*dest = DIRSEP_CHAR;
+					}
+					dest++;
+				}
+			
+				sprintf(config[3], "set romdir \"%s\"", tmp_path);
+			}
+			#else
+			sprintf(config[3],"set romdir \"%s\"",romdir);
+			#endif /* DINGOO_NATIVE */
+			sprintf(config[4], "set statesram %i", statesram);
+			sprintf(config[5], "set systemmode %i", systemmode);
+			if(systemmode == 0){
+				sprintf(config[6], "set forcedmg 0");
+				sprintf(config[7], "set gbamode 0");
+			} else if(systemmode == 1){
+				sprintf(config[6], "set forcedmg 1");
+				sprintf(config[7], "set gbamode 0");
+			} else if(systemmode == 2){
+				sprintf(config[6], "set forcedmg 0");
+				sprintf(config[7], "set gbamode 1");
+			}
+			sprintf(config[8], "set sndlvl %i", sndlvl);
+			
+			for(i=0; i<9; i++)
+				rc_command(config[i]);
+
+			pal_dirty();
+
+			if (ret == 10){ /* Apply & Save */
+#ifdef DINGOO_SIM
+				file = fopen("a:"DIRSEP"ohboy"DIRSEP"ohboy.rc","w");
+#else
+#ifdef DINGOO_OPENDINGUX
+				static char *ohboyrc;
+				ohboyrc = malloc(strlen(getenv("HOME")) + 28);
+				sprintf(ohboyrc, "%s/.ohboy/ohboy.rc", getenv("HOME"));
+				file = fopen(ohboyrc,"w");
+				free (ohboyrc);
+#else
+				file = fopen("ohboy.rc","w");
+#endif /* DINGOO_OPENDINGUX */
+#endif /* DINGOO_SIM */
+				for(i=0; i<9; i++){
+					fputs(config[i],file);
+					fputs("\n",file);
+				}
+				fclose(file);
+			}
+		break;
+	}
+	free(romdir);
+	return ret;
+}
+
+int menu_video_settings(){
+
+	int ret=0, i=0;
+	struct filt_s *filtp=0;
+	int filt=0, cfilter=0, upscale=0, borderon=0;
+	char *paldir=0, *loadpal=0, *pal=0, *paltemp=0, *palname=0, *borderdir=0, *loadborder=0, *border=0, *bordertemp=0, *bordername=0, *gbcborder=0, *gbcbordertemp=0, *gbcbordername=0;
+
+	FILE *file;
+
+	filt = findfilt();
+	cfilter = rc_getint("colorfilter");
+	if(cfilter && !rc_getint("filterdmg")) cfilter = 2;
+	upscale = rc_getint("upscaler");
+	borderon = rc_getint("bmpenabled");
 	
 #ifdef DINGOO_SIM
     paldir = "a:\\ohboy\\palettes\\";
@@ -756,38 +909,19 @@ int menu_options(){
 	
 	start:
 
-	dialog_begin("Options",NULL);
+	dialog_begin("Video Settings",NULL);
 
 	dialog_text("Mono Palette",palname,FIELD_SELECTABLE);               /* 1 */
-	dialog_option("Color Filter",lcolorfilter,&cfilter);        /* 2 */
-	dialog_option("Filter Type",ldmgfilters,&filt);             /* 3 */
-	dialog_option("Upscaler",lupscaler,&upscale);               /* 4 */
-	dialog_option("Frameskip",lframeskip,&skip);                /* 5 */
-	dialog_option("Show FPS",lsdl_showfps,&sfps);               /* 6 */
-	dialog_option("Use Borders",lborderon,&borderon);               /* 7 */
-	dialog_text("DMG Border Image",bordername,FIELD_SELECTABLE);             /* 8 */
-	dialog_text("GBC Border Image",gbcbordername,FIELD_SELECTABLE);             /* 9 */
-#if defined(WIZ) || defined(DINGOO_NATIVE)
-	dialog_option("Clock Speed",lclockspeeds,&speed);           /* 10 */
-#else
-	dialog_text("Clock Speed","Default",0);                     /* 10 */
-#endif
-#ifdef DINGOO_SIM
-	dialog_text("Rom Path", "Default", 0);                      /* 11 */
-#else
-	dialog_text("Rom Path",romdir,FIELD_SELECTABLE);            /* 11 */
-#endif /* DINGOO_SIM */
-#ifdef GNUBOY_HARDWARE_VOLUME
-	dialog_option("Volume",lsndlvl,&sndlvl);   /* 12 */ /* this is not the OSD volume.. */
-#else
-	dialog_text("Volume", "Default", 0);                        /* 12 */ /* this is not the OSD volume.. */
-#endif /* GNBOY_HARDWARE_VOLUME */
-	dialog_option("State SRAM",lstatesram,&statesram);          /* 13 */
-	dialog_option("System",lsystemmode,&systemmode);            /* 14 */
-	dialog_text(NULL,NULL,0);                                   /* 15 */
-	dialog_text("Apply",NULL,FIELD_SELECTABLE);                 /* 16 */
-	dialog_text("Apply & Save",NULL,FIELD_SELECTABLE);          /* 17 */
-	dialog_text("Cancel",NULL,FIELD_SELECTABLE);                /* 18 */
+	dialog_option("Color Filter",lcolorfilter,&cfilter);                /* 2 */
+	dialog_option("Filter Type",ldmgfilters,&filt);                     /* 3 */
+	dialog_option("Upscaler",lupscaler,&upscale);                       /* 4 */
+	dialog_option("Use Borders",lborderon,&borderon);                   /* 5 */
+	dialog_text("DMG Border Image",bordername,FIELD_SELECTABLE);        /* 6 */
+	dialog_text("GBC Border Image",gbcbordername,FIELD_SELECTABLE);     /* 7 */
+	dialog_text(NULL,NULL,0);                                           /* 8 */
+	dialog_text("Apply",NULL,FIELD_SELECTABLE);                         /* 9 */
+	dialog_text("Apply & Save",NULL,FIELD_SELECTABLE);                  /* 10 */
+	dialog_text("Cancel",NULL,FIELD_SELECTABLE);                        /* 11 */
 
 
 	switch(ret=dialog_end()){
@@ -799,7 +933,7 @@ int menu_options(){
 				palname = basexname(paltemp);
 			}	
 			goto start;
-		case 8: /* "DMG Border Image" */
+		case 6: /* "DMG Border Image" */
 #ifdef OHBOY_USE_SDL_IMAGE
 		    loadborder = menu_requestfile(NULL,"Select DMG Border Image",borderdir,"bmp;png");
 #else
@@ -811,7 +945,7 @@ int menu_options(){
 				bordername = basexname(bordertemp);
 			}	
 			goto start;
-		case 9: /* "GBC Border Image" */
+		case 7: /* "GBC Border Image" */
 #ifdef OHBOY_USE_SDL_IMAGE
 		    loadborder = menu_requestfile(NULL,"Select GBC Border Image",borderdir,"bmp;png");
 #else
@@ -823,48 +957,13 @@ int menu_options(){
 				gbcbordername = basexname(gbcbordertemp);
 			}	
 			goto start;
-		case 11: /* "Rom Path" romdir */
-			romtemp = menu_requestdir("Select Rom Directory",romdir);
-			if(romtemp){
-				free(romdir);
-				romdir = romtemp;
-			}
-			goto start;
-		case 18: /* Cancel */
+		case 11: /* Cancel */
 			return ret;
 			break;
-		case 16: /* Apply */
-		case 17: /* Apply & Save */
-			#ifdef GNUBOY_HARDWARE_VOLUME
-			pcm_volume(sndlvl * 10);
-			#endif /* GNBOY_HARDWARE_VOLUME */
+		case 9: /* Apply */
+		case 10: /* Apply & Save */
+
 			filtp = &dmgfilt[filt];
-			if(speed)
-			{
-#ifdef DINGOO_NATIVE
-                /*
-                ** For now do NOT plug in into settings system, current
-                ** (Wiz) speed system is focused on multiples of 50Mhz.
-                ** Dingoo default clock speed is 336Mhz (CPU certified for
-                ** 360, 433MHz is supposed to be possible).
-                ** Only set clock speed if changed in options each and
-                ** everytime - do not use config file
-                */
-                --speed;
-                /* check menu response is withing the preset array range/size */
-                if (speed > (sizeof(dingoo_clock_speeds)/sizeof(uintptr_t) - 1) )
-                    speed = 0;
-                
-                tempCore = dingoo_clock_speeds[speed];
-                dingoo_clock_change_result = cpu_clock_set(tempCore);
-                
-                tempCore=tempMemory=0;
-                cpu_clock_get(&tempCore, &tempMemory); /* currently unused */
-                /* TODO display clock speed next to on screen FPS indicator */
-#endif /* DINGOO_NATIVE */
-    
-				speed = speed*50 + 200;
-			}
 			
 			#ifdef DINGOO_NATIVE /* FIXME Windows too..... if (DIRSEP_CHAR == '\\').... */
 			{
@@ -894,9 +993,7 @@ int menu_options(){
 			sprintf(config[2],"set colorfilter %i",cfilter!=0);
 			sprintf(config[3],"set filterdmg %i",cfilter==1);
 			sprintf(config[4],"set upscaler %i",upscale);
-			sprintf(config[5],"set frameskip %i",skip-1);
-			sprintf(config[6],"set showfps %i",sfps);
-			sprintf(config[7],"set bmpenabled %i",borderon);
+			sprintf(config[5],"set bmpenabled %i",borderon);
 			#ifdef DINGOO_NATIVE /* FIXME Windows too..... if (DIRSEP_CHAR == '\\').... */
 			{
 				char tmp_bord[PATH_MAX];
@@ -915,10 +1012,10 @@ int menu_options(){
 					destb++;
 				}
 			
-				sprintf(config[8], "set border \"%s\"", tmp_bord);
+				sprintf(config[6], "set border \"%s\"", tmp_bord);
 			}
 			#else
-			sprintf(config[8],"set border \"%s\"",border);
+			sprintf(config[6],"set border \"%s\"",border);
 			#endif /* DINGOO_NATIVE */
 			#ifdef DINGOO_NATIVE /* FIXME Windows too..... if (DIRSEP_CHAR == '\\').... */
 			{
@@ -938,72 +1035,35 @@ int menu_options(){
 					destc++;
 				}
 			
-				sprintf(config[9], "set gbcborder \"%s\"", tmp_gbcbord);
+				sprintf(config[7], "set gbcborder \"%s\"", tmp_gbcbord);
 			}
 			#else
-			sprintf(config[9],"set gbcborder \"%s\"",gbcborder);
+			sprintf(config[7],"set gbcborder \"%s\"",gbcborder);
 			#endif /* DINGOO_NATIVE */
-			sprintf(config[10],"set cpuspeed %i",speed);
-			#ifdef DINGOO_NATIVE /* FIXME Windows too..... if (DIRSEP_CHAR == '\\').... */
-			{
-				char tmp_path[PATH_MAX];
-				char *dest, *src;
-				dest = &tmp_path[0];
-				src = romdir;
-				
-				/* escape the path seperator (should escape other things too.) */
-				while(*dest = *src++)
-				{
-					if (*dest == DIRSEP_CHAR)
-					{
-						dest++;
-						*dest = DIRSEP_CHAR;
-					}
-					dest++;
-				}
+			sprintf(config[8],"set red 0x%.6x 0x%.6x 0x%.6x 0x%.6x", filtp->red[0], filtp->red[1], filtp->red[2], filtp->red[3]);
+			sprintf(config[9],"set green 0x%.6x 0x%.6x 0x%.6x 0x%.6x", filtp->green[0], filtp->green[1], filtp->green[2], filtp->green[3]);
+			sprintf(config[10],"set blue 0x%.6x 0x%.6x 0x%.6x 0x%.6x", filtp->blue[0], filtp->blue[1], filtp->blue[2], filtp->blue[3]);
 			
-				sprintf(config[11], "set romdir \"%s\"", tmp_path);
-			}
-			#else
-			sprintf(config[11],"set romdir \"%s\"",romdir);
-			#endif /* DINGOO_NATIVE */
-			sprintf(config[12],"set red 0x%.6x 0x%.6x 0x%.6x 0x%.6x", filtp->red[0], filtp->red[1], filtp->red[2], filtp->red[3]);
-			sprintf(config[13],"set green 0x%.6x 0x%.6x 0x%.6x 0x%.6x", filtp->green[0], filtp->green[1], filtp->green[2], filtp->green[3]);
-			sprintf(config[14],"set blue 0x%.6x 0x%.6x 0x%.6x 0x%.6x", filtp->blue[0], filtp->blue[1], filtp->blue[2], filtp->blue[3]);
-			sprintf(config[15], "set sndlvl %i", sndlvl);
-			sprintf(config[16], "set statesram %i", statesram);
-			sprintf(config[17], "set systemmode %i", systemmode);
-			if(systemmode == 0){
-				sprintf(config[18], "set forcedmg 0");
-				sprintf(config[19], "set gbamode 0");
-			} else if(systemmode == 1){
-				sprintf(config[18], "set forcedmg 1");
-				sprintf(config[19], "set gbamode 0");
-			} else if(systemmode == 2){
-				sprintf(config[18], "set forcedmg 0");
-				sprintf(config[19], "set gbamode 1");
-			}
-			
-			for(i=0; i<20; i++)
+			for(i=0; i<11; i++)
 				rc_command(config[i]);
 
 			pal_dirty();
 
-			if (ret == 17){ /* Apply & Save */
+			if (ret == 10){ /* Apply & Save */
 #ifdef DINGOO_SIM
-				file = fopen("a:"DIRSEP"ohboy"DIRSEP"ohboy.rc","w");
+				file = fopen("a:"DIRSEP"ohboy"DIRSEP"video.rc","w");
 #else
 #ifdef DINGOO_OPENDINGUX
-				static char *ohboyrc;
-				ohboyrc = malloc(strlen(getenv("HOME")) + 28);
-				sprintf(ohboyrc, "%s/.ohboy/ohboy.rc", getenv("HOME"));
-				file = fopen(ohboyrc,"w");
-				free (ohboyrc);
+				static char *videorc;
+				videorc = malloc(strlen(getenv("HOME")) + 28);
+				sprintf(videorc, "%s/.ohboy/video.rc", getenv("HOME"));
+				file = fopen(videorc,"w");
+				free (videorc);
 #else
-				file = fopen("ohboy.rc","w");
+				file = fopen("video.rc","w");
 #endif /* DINGOO_OPENDINGUX */
 #endif /* DINGOO_SIM */
-				for(i=0; i<20; i++){
+				for(i=0; i<11; i++){
 					fputs(config[i],file);
 					fputs("\n",file);
 				}
@@ -1014,15 +1074,12 @@ int menu_options(){
 
 		break;
 	}
-
-	free(romdir);
 	free(paldir);
 	free(borderdir);
-
 	return ret;
 }
 
-int menu_controls(){
+int menu_input_settings(){
 
 	int ret=0, i=0, analog_input=0;
 #ifdef DINGOO_BUILD
@@ -1050,7 +1107,7 @@ int menu_controls(){
 
 	start:
 
-	dialog_begin("Controls",NULL);
+	dialog_begin("Input Settings",NULL);
 
 	#if defined(CAANOO)
 	dialog_text("Caanoo","Gameboy",0);                       /* 1 */
@@ -1461,16 +1518,17 @@ int menu(){
 #ifdef CAANOO
 		dialog_begin(rom.name,"Press Home to open the menu");
 #endif
-		dialog_text("Back to Game",NULL,FIELD_SELECTABLE);
-		dialog_text("Load State",NULL,FIELD_SELECTABLE);
-		dialog_text("Save State",NULL,FIELD_SELECTABLE);
-		dialog_text("Reset Game",NULL,FIELD_SELECTABLE);
-		dialog_text(NULL,NULL,0);
-		dialog_text("Load ROM",NULL,FIELD_SELECTABLE);
-		dialog_text("Options",NULL,FIELD_SELECTABLE);
-		dialog_text("Controls",NULL,FIELD_SELECTABLE);
-		dialog_text("About",NULL,FIELD_SELECTABLE);
-		dialog_text("Quit","",FIELD_SELECTABLE);
+		dialog_text("Back to Game",NULL,FIELD_SELECTABLE);       /* 1 */
+		dialog_text("Load State",NULL,FIELD_SELECTABLE);         /* 2 */
+		dialog_text("Save State",NULL,FIELD_SELECTABLE);         /* 3 */
+		dialog_text("Reset Game",NULL,FIELD_SELECTABLE);         /* 4 */
+		dialog_text(NULL,NULL,0);                                /* 5 */
+		dialog_text("Load ROM",NULL,FIELD_SELECTABLE);           /* 6 */
+		dialog_text("Main Settings",NULL,FIELD_SELECTABLE);      /* 7 */
+		dialog_text("Video Settings",NULL,FIELD_SELECTABLE);     /* 8 */
+		dialog_text("Input Settings",NULL,FIELD_SELECTABLE);     /* 9 */
+		dialog_text("About",NULL,FIELD_SELECTABLE);              /* 10 */
+		dialog_text("Quit","",FIELD_SELECTABLE);                 /* 11 */
 
 		switch(dialog_end()){
 			case 2:
@@ -1496,15 +1554,18 @@ int menu(){
 				}
 				break;
 			case 7:
-				if(menu_options()) mexit=1;
+				if(menu_main_settings()) mexit=0;
 				break;
 			case 8:
-				if(menu_controls()) mexit=1;
+				if(menu_video_settings()) mexit=0;
 				break;
 			case 9:
-				if(menu_about()) mexit=0;
+				if(menu_input_settings()) mexit=0;
 				break;
 			case 10:
+				if(menu_about()) mexit=0;
+				break;
+			case 11:
 				exit(0);
 				break;
 			default:
@@ -1554,11 +1615,12 @@ launcher:
 #ifdef CAANOO
 	dialog_begin("OHBOY","Press Home to open the menu");
 #endif
-	dialog_text("Load ROM",NULL,FIELD_SELECTABLE);
-	dialog_text("Options",NULL,FIELD_SELECTABLE);
-	dialog_text("Controls",NULL,FIELD_SELECTABLE);
-	dialog_text("About",NULL,FIELD_SELECTABLE);
-	dialog_text("Quit","",FIELD_SELECTABLE);
+	dialog_text("Load ROM",NULL,FIELD_SELECTABLE);           /* 1 */
+	dialog_text("Main Settings",NULL,FIELD_SELECTABLE);      /* 2 */
+	dialog_text("Video Settings",NULL,FIELD_SELECTABLE);     /* 3 */
+	dialog_text("Input Settings",NULL,FIELD_SELECTABLE);     /* 4 */
+	dialog_text("About",NULL,FIELD_SELECTABLE);              /* 5 */
+	dialog_text("Quit","",FIELD_SELECTABLE);                 /* 6 */
 
 	switch(dialog_end()){
 		case 1:
@@ -1566,15 +1628,18 @@ launcher:
 			if(!rom) goto launcher;
 			break;
 		case 2:
-			if(!menu_options()) goto launcher;
+			if(!menu_main_settings()) goto launcher;
 			break;
 		case 3:
-			if(!menu_controls()) goto launcher;
+			if(!menu_video_settings()) goto launcher;
 			break;
 		case 4:
-			if(!menu_about()) goto launcher;
+			if(!menu_input_settings()) goto launcher;
 			break;
 		case 5:
+			if(!menu_about()) goto launcher;
+			break;
+		case 6:
 			exit(0);
 		default:
 			goto launcher;

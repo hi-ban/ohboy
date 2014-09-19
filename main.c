@@ -2043,7 +2043,7 @@ int main(int argc, char *argv[]){
 	/* End: gnuboy default settings */
 
 #ifdef DINGOO_SIM
-	rc_command("set savedir \"a:\\ohboy\\saves\\\"");
+	rc_command("set savedir \"a:/ohboy/saves/\"");
 #else	
 #ifdef DINGOO_OPENDINGUX
 	static char *svdir;

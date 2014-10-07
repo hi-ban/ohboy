@@ -37,6 +37,67 @@ static pixmap_t *dscrollu, *dscrolld, *doptl, *doptr;
 #define STATUS_LINE_OFFSET -5
 #endif /* UBYTE_USE_FREETYPE */
 
+int LoadLastSelectedRomPos() // Try to get the last selected rom position from a config file
+{
+	int savedval=0;
+	FILE *file;
+#ifdef DINGOO_SIM
+	file = fopen("a:"DIRSEP"ohboy"DIRSEP"lastselected.rc","r+");
+#else
+#ifdef DINGOO_OPENDINGUX
+	char *lastselrc;
+	lastselrc = malloc(strlen(getenv("HOME")) + 28);
+	sprintf(lastselrc, "%s/.ohboy/lastselected.rc", getenv("HOME"));
+	file = fopen(lastselrc,"r+");
+	free (lastselrc);
+#else
+	file = fopen("lastselected.rc","r+");
+#endif /* DINGOO_OPENDINGUX */
+#endif /* DINGOO_SIM */
+	if (file != NULL) {
+		fscanf (file, "%i", &savedval);
+		fclose (file);
+	}
+	return savedval;
+}
+
+void SaveLastSelectedRomPos(int pospointer) // Save the last selected rom position in a config file
+{
+	FILE *file;
+#ifdef DINGOO_SIM
+	file = fopen("a:"DIRSEP"ohboy"DIRSEP"lastselected.rc","w+");
+#else
+#ifdef DINGOO_OPENDINGUX
+	char *lastselrc;
+	lastselrc = malloc(strlen(getenv("HOME")) + 28);
+	sprintf(lastselrc, "%s/.ohboy/lastselected.rc", getenv("HOME"));
+	file = fopen(lastselrc,"w+");
+	free (lastselrc);
+#else
+	file = fopen("lastselected.rc","w+");
+#endif /* DINGOO_OPENDINGUX */
+#endif /* DINGOO_SIM */
+	fprintf (file, "%i", pospointer);
+	fclose (file);
+}
+
+void DelLastSelectedRomPos() // Remove the last selected rom position config file
+{
+#ifdef DINGOO_SIM
+	remove ("a:"DIRSEP"ohboy"DIRSEP"lastselected.rc");
+#else
+#ifdef DINGOO_OPENDINGUX
+	char *lastselrc;
+	lastselrc = malloc(strlen(getenv("HOME")) + 28);
+	sprintf(lastselrc, "%s/.ohboy/lastselected.rc", getenv("HOME"));
+	remove (lastselrc);
+	free (lastselrc);
+#else
+	remove ("lastselected.rc");
+#endif /* DINGOO_OPENDINGUX */
+#endif /* DINGOO_SIM */
+}
+
 int dialog_maxtextw(){
 	return gui.w-dpad*2;
 }
@@ -256,7 +317,7 @@ static int dialog_drawdirty(dirty_t *dirty){
 	if(dirty->status) dialog_drawstatus();
 }
 
-int dialog_end(){
+int dialog_end(int* rombrowsing){
 
 	guievent_t ev;
 	field_t *field;
@@ -279,6 +340,13 @@ int dialog_end(){
 	dialog->client_h = dialog->visible_count * dialog->field_h;
 	dialog->title_h = (gui.h -dialog->client_h )/2;
 	dialog->status_h = gui.h - dialog->title_h - dialog->client_h;
+	
+	if(rombrowsing==1){
+		dialog->selected = LoadLastSelectedRomPos();
+		if(dialog->selected >= dialog->pos+dialog->visible_count) {
+			dialog->pos = dialog->selected-dialog->visible_count+1;
+		}
+	}
 
 	pad = dpad;
 	pad2 = dpad << 1;
@@ -509,7 +577,12 @@ int dialog_end(){
 	}
 
 	if(exit==-1) exit = 0;
-
+	if(rombrowsing==1){
+		if(exit>=1){
+			SaveLastSelectedRomPos(dialog->selected);
+		}
+	}
+	
 	free(dialog);
 	dialog = NULL;
 	return exit;

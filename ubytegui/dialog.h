@@ -50,6 +50,7 @@ void dialog_close();
 void dialog_begin(const char* title, const char* status);
 int dialog_text(const char *prompt, const char* body, int flags);
 int dialog_option(const char *prompt, const char** options, int* selected);
-int dialog_end();
+int dialog_end(int* rombrowsing);
+void DelLastSelectedRomPos();
 
 #endif // DIALOG_H_INCLUDED

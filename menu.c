@@ -100,7 +100,7 @@ const char *basexname (const char *f) {
     return (f); 
 }
 
-char* menu_browsedir(char* fpathname, char* file, char *title, char *exts){
+char* menu_browsedir(char* fpathname, char* file, char *title, char *exts, int* rombrowsing){
     /* this routine has side effects with fpathname and file, FIXME */
 	DIR *dir;
 	struct dirent *d;
@@ -161,7 +161,7 @@ char* menu_browsedir(char* fpathname, char* file, char *title, char *exts){
 		dialog_text(files[i],"",FIELD_SELECTABLE);
 	}
 
-	if(j = dialog_end()){
+	if(j = dialog_end(rombrowsing)){
 		if(file) {
 			strcpy(file,files[j-1]);
 		} else {
@@ -178,7 +178,7 @@ char* menu_browsedir(char* fpathname, char* file, char *title, char *exts){
 
 }
 
-char* menu_requestfile(char* file, char *title, char* path, char *exts){
+char* menu_requestfile(char* file, char *title, char* path, char *exts, int* rombrowsing){
 	char *dir;
 	int allocmem = file == NULL;
 	int tmplen = 0;
@@ -209,7 +209,7 @@ char* menu_requestfile(char* file, char *title, char* path, char *exts){
     
 	snprintf(parent_dir_str, sizeof(parent_dir_str), "..%s", DIRSEP);
 
-	while(dir = menu_browsedir(file, file+strlen(file),title,exts)){
+	while(dir = menu_browsedir(file, file+strlen(file),title,exts,rombrowsing)){
         if (!strcmp(dir, parent_dir_str))
         {
             /* need to go up a directory */
@@ -330,11 +330,12 @@ char *menu_requestdir(const char *title, const char *path){
 		}
 		closedir(cd);
 
-		switch(ret=dialog_end()){
+		switch(ret=dialog_end(0)){
 			case 0:
 				dir = (char*)-1;
 				break;
 			case 1:
+				DelLastSelectedRomPos();
 				dir = strdup(cdpath);
 				break;
 			case 2:
@@ -473,7 +474,7 @@ int menu_state(int save){
 		free(name);
 	}
 
-	if(ret=dialog_end()){
+	if(ret=dialog_end(0)){
 		name = malloc(strlen(saveprefix) + 5);
 		sprintf(name, "%s.%03d", saveprefix, ret-1);
 		if(save){
@@ -742,7 +743,7 @@ int menu_main_settings(){
 	dialog_text("Cancel",NULL,FIELD_SELECTABLE);                /* 11 */
 
 
-	switch(ret=dialog_end()){
+	switch(ret=dialog_end(0)){
 		case 4: /* "Rom Path" romdir */
 			romtemp = menu_requestdir("Select Rom Directory",romdir);
 			if(romtemp){
@@ -924,9 +925,9 @@ int menu_video_settings(){
 	dialog_text("Cancel",NULL,FIELD_SELECTABLE);                        /* 11 */
 
 
-	switch(ret=dialog_end()){
+	switch(ret=dialog_end(0)){
 		case 1: /* "Mono Palette" */
-		    loadpal = menu_requestfile(NULL,"Select Palette",paldir,"pal");
+		    loadpal = menu_requestfile(NULL,"Select Palette",paldir,"pal",0);
 			if(loadpal){
 				pal = loadpal;
 				paltemp = strdup(pal);
@@ -935,9 +936,9 @@ int menu_video_settings(){
 			goto start;
 		case 6: /* "DMG Border Image" */
 #ifdef OHBOY_USE_SDL_IMAGE
-		    loadborder = menu_requestfile(NULL,"Select DMG Border Image",borderdir,"bmp;png");
+		    loadborder = menu_requestfile(NULL,"Select DMG Border Image",borderdir,"bmp;png",0);
 #else
-			loadborder = menu_requestfile(NULL,"Select DMG Border Image",borderdir,"bmp");
+			loadborder = menu_requestfile(NULL,"Select DMG Border Image",borderdir,"bmp",0);
 #endif /* OHBOY_USE_SDL_IMAGE */
 			if(loadborder){
 				border = loadborder;
@@ -947,9 +948,9 @@ int menu_video_settings(){
 			goto start;
 		case 7: /* "GBC Border Image" */
 #ifdef OHBOY_USE_SDL_IMAGE
-		    loadborder = menu_requestfile(NULL,"Select GBC Border Image",borderdir,"bmp;png");
+		    loadborder = menu_requestfile(NULL,"Select GBC Border Image",borderdir,"bmp;png",0);
 #else
-			loadborder = menu_requestfile(NULL,"Select GBC Border Image",borderdir,"bmp");
+			loadborder = menu_requestfile(NULL,"Select GBC Border Image",borderdir,"bmp",0);
 #endif /* OHBOY_USE_SDL_IMAGE */
 			if(loadborder){
 				gbcborder = loadborder;
@@ -1147,7 +1148,7 @@ int menu_input_settings(){
 	dialog_text("Apply & Save",NULL,FIELD_SELECTABLE);       /* 14 */
 	dialog_text("Cancel",NULL,FIELD_SELECTABLE);             /* 15 */
 
-	switch(ret=dialog_end()){
+	switch(ret=dialog_end(0)){
 		case 15: /* Cancel */
 			return ret;
 			break;
@@ -1484,7 +1485,7 @@ snprintf(ohboy_ver_str, sizeof(ohboy_ver_str)-1, "%s Unofficial", OHBOY_VER);
 	dialog_text(NULL,"http://ohboy.googlecode.com/",0);
 	dialog_text(NULL,"http://gnuboy.googlecode.com/",0);
 
-	switch(ret=dialog_end()){
+	switch(ret=dialog_end(0)){
 		case 1:
 			return ret;
 			break;
@@ -1530,7 +1531,7 @@ int menu(){
 		dialog_text("About",NULL,FIELD_SELECTABLE);              /* 10 */
 		dialog_text("Quit","",FIELD_SELECTABLE);                 /* 11 */
 
-		switch(dialog_end()){
+		switch(dialog_end(0)){
 			case 2:
 				if(menu_state(0)) mexit=1;
 				break;
@@ -1547,7 +1548,7 @@ int menu(){
 #else
 				dir = rc_getstr("romdir");
 #endif /* DINGOO_OPENDINGUX */
-				if(loadrom = menu_requestfile(NULL,"Select Rom",dir,"gb;gbc;zip;gz;gbz")) {
+				if(loadrom = menu_requestfile(NULL,"Select Rom",dir,"gb;gbc;zip;gz;gbz",1)) {
 					loader_unload();
 					ohb_loadrom(loadrom);
 					mexit=1;
@@ -1622,9 +1623,9 @@ launcher:
 	dialog_text("About",NULL,FIELD_SELECTABLE);              /* 5 */
 	dialog_text("Quit","",FIELD_SELECTABLE);                 /* 6 */
 
-	switch(dialog_end()){
+	switch(dialog_end(0)){
 		case 1:
-			rom = menu_requestfile(NULL,"Select Rom",dir,"gb;gbc;zip;gz;gbz");
+			rom = menu_requestfile(NULL,"Select Rom",dir,"gb;gbc;zip;gz;gbz",1);
 			if(!rom) goto launcher;
 			break;
 		case 2:

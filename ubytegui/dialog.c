@@ -325,6 +325,7 @@ int dialog_end(int* rombrowsing){
 
 	int i, pad, pad2, exit=0, delay=0;
 	int up=0, down=0, left=0, right=0;
+	int loopcount=0;
 
 	gui_setclip(0,0,gui.w,gui.h);
 	gui_cls();
@@ -444,6 +445,15 @@ int dialog_end(int* rombrowsing){
 				} else if(s<0){                      /* LOOP */ 
 					dialog->pos = dialog->field_count-dialog->visible_count;
 					s = dialog->field_count-1;
+					
+					loopcount=0;
+					checkloop_up:           /*prevents the selection of a non-selectable field when looping the selection*/
+					if(!(dialog->fields[s].flags & FIELD_SELECTABLE)){
+						s--;
+						loopcount++;
+						if(loopcount < 3) goto checkloop_up;  /*set a limited number of loops to prevent an infinite loop when all fields are non-selectable*/
+					}
+					
 					if(dirty.update){
 						dirty.field_start = 0;
 						dirty.field_count = dialog->visible_count;
@@ -477,6 +487,15 @@ int dialog_end(int* rombrowsing){
 				} else if(s>=dialog->field_count){     /* LOOP */
 					dialog->pos = 0;
 					s = 0;
+					
+					loopcount=0;
+					checkloop_down:           /*prevents the selection of a non-selectable field when looping the selection*/
+					if(!(dialog->fields[s].flags & FIELD_SELECTABLE)){
+						s++;
+						loopcount++;
+						if(loopcount < 3) goto checkloop_down;  /*set a limited number of loops to prevent an infinite loop when all fields are non-selectable*/
+					}
+					
 					if(dirty.update){
 						dirty.field_start = 0;
 						dirty.field_count = dialog->visible_count;

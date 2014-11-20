@@ -451,7 +451,7 @@ int dialog_end(int* rombrowsing){
 					if(!(dialog->fields[s].flags & FIELD_SELECTABLE)){
 						s--;
 						loopcount++;
-						if(loopcount < 3) goto checkloop_up;  /*set a limited number of loops to prevent an infinite loop when all fields are non-selectable*/
+						if(loopcount < dialog->visible_count) goto checkloop_up;  /*set a limited number of loops, equal to the visible number of lines, to prevent an infinite loop when all fields are non-selectable*/
 					}
 					
 					if(dirty.update){
@@ -493,7 +493,7 @@ int dialog_end(int* rombrowsing){
 					if(!(dialog->fields[s].flags & FIELD_SELECTABLE)){
 						s++;
 						loopcount++;
-						if(loopcount < 3) goto checkloop_down;  /*set a limited number of loops to prevent an infinite loop when all fields are non-selectable*/
+						if(loopcount < dialog->visible_count) goto checkloop_down;  /*set a limited number of loops, equal to the visible number of lines, to prevent an infinite loop when all fields are non-selectable*/
 					}
 					
 					if(dirty.update){

@@ -703,14 +703,14 @@ int menu_main_settings(){
 #endif /* DINGOO_NATIVE */
 	if(speed<0) speed = 0;
 	if(speed>11) speed = 11;
-#ifdef DINGOO_SIM
+#if defined(DINGOO_SIM) || defined(DISABLE_ROMBROWSER)
 #else
 #ifdef DINGOO_OPENDINGUX
 	romdir = menu_checkdir(rc_getstr("romdir"),getenv("HOME"));
 #else
 	romdir = rc_getstr("romdir");
 #endif /* DINGOO_OPENDINGUX */
-#endif /* DINGOO_SIM */
+#endif /* DINGOO_SIM || DISABLE_ROMBROWSER*/
 
 	romdir = romdir ? strdup(romdir) : strdup(".");
 	
@@ -725,11 +725,11 @@ int menu_main_settings(){
 #else
 	dialog_text("Clock Speed","Default",0);                     /* 3 */
 #endif
-#ifdef DINGOO_SIM
+#if defined(DINGOO_SIM) || defined(DISABLE_ROMBROWSER)
 	dialog_text("Rom Path", "Default", 0);                      /* 4 */
 #else
 	dialog_text("Rom Path",romdir,FIELD_SELECTABLE);            /* 4 */
-#endif /* DINGOO_SIM */
+#endif /* DINGOO_SIM || DISABLE_ROMBROWSER */
 	dialog_option("State SRAM",lstatesram,&statesram);          /* 5 */
 	dialog_option("System",lsystemmode,&systemmode);            /* 6 */
 #ifdef GNUBOY_HARDWARE_VOLUME
@@ -1503,7 +1503,7 @@ int menu(){
 	old_upscale = rc_getint("upscaler");
 	gui_begin();
 	while(!mexit){
-#ifndef DINGOO_BUILD || CAANOO
+#if !defined(DINGOO_BUILD) || !defined(CAANOO)
 		dialog_begin(rom.name,"OhBoy");
 #endif
 #ifdef DINGOO_NATIVE
@@ -1524,7 +1524,11 @@ int menu(){
 		dialog_text("Save State",NULL,FIELD_SELECTABLE);         /* 3 */
 		dialog_text("Reset Game",NULL,FIELD_SELECTABLE);         /* 4 */
 		dialog_text(NULL,NULL,0);                                /* 5 */
+#ifdef DISABLE_ROMBROWSER
+		dialog_text(NULL,NULL,0);                                /* 6 */
+#else
 		dialog_text("Load ROM",NULL,FIELD_SELECTABLE);           /* 6 */
+#endif /*DISABLE_ROMBROWSER*/
 		dialog_text("Main Settings",NULL,FIELD_SELECTABLE);      /* 7 */
 		dialog_text("Video Settings",NULL,FIELD_SELECTABLE);     /* 8 */
 		dialog_text("Input Settings",NULL,FIELD_SELECTABLE);     /* 9 */
@@ -1600,7 +1604,7 @@ int launcher(){;
 	gui_begin();
 
 launcher:
-#ifndef DINGOO_BUILD || CAANOO
+#if !defined(DINGOO_BUILD) || !defined(CAANOO)
 	dialog_begin("OHBOY",NULL);
 #endif
 #ifdef DINGOO_NATIVE

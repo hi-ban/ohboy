@@ -141,7 +141,7 @@ enum
 			return 1;
 		}
 #endif
-#ifndef DINGOO_BUILD || GP2X_ONLY || CAANOO
+#if !defined(DINGOO_BUILD) || !defined(GP2X_ONLY) || !defined(CAANOO)
 		if(event.type == SDL_KEYDOWN || event.type == SDL_KEYUP){
 			ev->state = event.key.state == SDL_PRESSED ? GUI_PRESSED : GUI_RELEASED;
 			switch(event.key.keysym.sym){

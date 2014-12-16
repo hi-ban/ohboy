@@ -2186,7 +2186,9 @@ int main(int argc, char *argv[]){
 #endif /* DINGOO_OPENDINGUX */
 #endif /* DINGOO_SIM */
 
+#if !defined(DISABLE_ROMBROWSER)
 	paint_menu_bg();
+#endif
 
 #ifdef DINGOO_SIM
 	rom = argv[0];
@@ -2198,10 +2200,12 @@ int main(int argc, char *argv[]){
 		strcpy(rom, argv[1]);
 	}
 	atexit(shutdown);
+#if !defined(DISABLE_ROMBROWSER)
 	while(!rom)
 	{
 		rom = launcher();
 	}
+#endif /* DISABLE_ROMBROWSER */
 	VideoEnterGame();
 #endif /* DINGOO_SIM */
 

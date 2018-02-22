@@ -650,6 +650,7 @@ const char *lupscaler[] = {"Native (No scale)", "Software 1.5x", "Scale3x+Sample
 const char *lupscaler[] = {"Native (No scale)", "Ayla 1.5x Upscaler", "Scale3x+Sample.75x", "1.666x Upscaler", "Ayla Fullscreen", NULL};
 #endif /* GCW ZERO */
 const char *lborderon[] = {"Off","Image File","BG Color",NULL};
+const char *lblendfram[] = {"Off","On",NULL};
 
 const char *lbutton_a[] = {"None","Button A","Button B","Select","Start","Reset","Quit","Quick Save","Quick Load",NULL};
 const char *lbutton_b[] = {"None","Button A","Button B","Select","Start","Reset","Quit","Quick Save","Quick Load",NULL};
@@ -861,7 +862,7 @@ int menu_video_settings(){
 
 	int ret=0, i=0;
 	struct filt_s *filtp=0;
-	int filt=0, cfilter=0, upscale=0, borderon=0;
+	int filt=0, cfilter=0, upscale=0, borderon=0, blendfram=0;
 	char *paldir=0, *loadpal=0, *pal=0, *paltemp=0, *palname=0, *borderdir=0, *loadborder=0, *border=0, *bordertemp=0, *bordername=0, *gbcborder=0, *gbcbordertemp=0, *gbcbordername=0;
 
 	FILE *file;
@@ -907,6 +908,8 @@ int menu_video_settings(){
 	gbcborder = gbcborder ? strdup(gbcborder) : strdup("Select GBC Border");	
 	gbcbordertemp = strdup(gbcborder);
 	gbcbordername = basexname(gbcbordertemp);
+
+	blendfram = rc_getint("blendframes");
 	
 	start:
 
@@ -919,10 +922,11 @@ int menu_video_settings(){
 	dialog_option("Use Borders",lborderon,&borderon);                   /* 5 */
 	dialog_text("DMG Border Image",bordername,FIELD_SELECTABLE);        /* 6 */
 	dialog_text("GBC Border Image",gbcbordername,FIELD_SELECTABLE);     /* 7 */
-	dialog_text(NULL,NULL,0);                                           /* 8 */
-	dialog_text("Apply",NULL,FIELD_SELECTABLE);                         /* 9 */
-	dialog_text("Apply & Save",NULL,FIELD_SELECTABLE);                  /* 10 */
-	dialog_text("Cancel",NULL,FIELD_SELECTABLE);                        /* 11 */
+	dialog_option("Simulate Ghosting",lblendfram,&blendfram);  			/* 8 */
+	dialog_text(NULL,NULL,0);                                           /* 9 */
+	dialog_text("Apply",NULL,FIELD_SELECTABLE);                         /* 10 */
+	dialog_text("Apply & Save",NULL,FIELD_SELECTABLE);                  /* 11 */
+	dialog_text("Cancel",NULL,FIELD_SELECTABLE);                        /* 12 */
 
 
 	switch(ret=dialog_end(0)){
@@ -958,11 +962,11 @@ int menu_video_settings(){
 				gbcbordername = basexname(gbcbordertemp);
 			}	
 			goto start;
-		case 11: /* Cancel */
+		case 12: /* Cancel */
 			return ret;
 			break;
-		case 9: /* Apply */
-		case 10: /* Apply & Save */
+		case 10: /* Apply */
+		case 11: /* Apply & Save */
 
 			filtp = &dmgfilt[filt];
 			
@@ -1044,13 +1048,14 @@ int menu_video_settings(){
 			sprintf(config[8],"set red 0x%.6x 0x%.6x 0x%.6x 0x%.6x", filtp->red[0], filtp->red[1], filtp->red[2], filtp->red[3]);
 			sprintf(config[9],"set green 0x%.6x 0x%.6x 0x%.6x 0x%.6x", filtp->green[0], filtp->green[1], filtp->green[2], filtp->green[3]);
 			sprintf(config[10],"set blue 0x%.6x 0x%.6x 0x%.6x 0x%.6x", filtp->blue[0], filtp->blue[1], filtp->blue[2], filtp->blue[3]);
-			
-			for(i=0; i<11; i++)
-				rc_command(config[i]);
+			sprintf(config[11],"set blendframes %i",blendfram);
 
+			for(i=0; i<12; i++)
+				rc_command(config[i]);
+			
 			pal_dirty();
 
-			if (ret == 10){ /* Apply & Save */
+			if (ret == 11){ /* Apply & Save */
 #ifdef DINGOO_SIM
 				file = fopen("a:"DIRSEP"ohboy"DIRSEP"video.rc","w");
 #else
@@ -1064,7 +1069,7 @@ int menu_video_settings(){
 				file = fopen("video.rc","w");
 #endif /* DINGOO_OPENDINGUX */
 #endif /* DINGOO_SIM */
-				for(i=0; i<11; i++){
+				for(i=0; i<12; i++){
 					fputs(config[i],file);
 					fputs("\n",file);
 				}

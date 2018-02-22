@@ -73,7 +73,7 @@ SDL_Rect myrect;
 static font_t *font;
 
 struct fb fb;
-static int upscaler=0, frameskip=0, sdl_showfps=0, cpu_speed=0, bmpenabled=0, statesram=1, analog_input=1, systemmode=0;
+static int upscaler=0, frameskip=0, sdl_showfps=0, cpu_speed=0, bmpenabled=0, statesram=1, analog_input=1, systemmode=0, blendframes=0;
 static char* romdir=0, pal=0;
 char *border;
 char *gbcborder;
@@ -108,6 +108,7 @@ rcvar_t vid_exports[] =
 	RCV_INT("bmpenabled", &bmpenabled),
 	RCV_STRING("border",&border),
 	RCV_STRING("gbcborder",&gbcborder),
+	RCV_INT("blendframes",&blendframes),
 	
 	RCV_INT("button_a", &button_a),
 	RCV_INT("button_b", &button_b),
@@ -121,6 +122,11 @@ rcvar_t vid_exports[] =
 #endif /* GCWZERO */	
 	RCV_END
 };
+
+struct fb currframe_fb;
+struct fb lastframe_fb;
+static un16 vid_currframe[160*144];
+static un16 vid_lastframe[160*144];
 
 struct fb vid_fb;
 static un16 vid_frame[160*144];
@@ -298,6 +304,37 @@ void vid_init() {
 	fb.ptr = vid_frame;
 	fb.enabled = 1;
 	fb.dirty = 0;
+
+
+	lastframe_fb.w = 160; /* Gameboy native res - width */
+	lastframe_fb.h = 144; /* Gameboy native res - height */
+	lastframe_fb.pelsize = 2;
+	lastframe_fb.pitch = 320;
+	lastframe_fb.indexed = 0;
+	lastframe_fb.cc[0].r = screen->format->Rloss;
+	lastframe_fb.cc[0].l = screen->format->Rshift;
+	lastframe_fb.cc[1].r = screen->format->Gloss;
+	lastframe_fb.cc[1].l = screen->format->Gshift;
+	lastframe_fb.cc[2].r = screen->format->Bloss;
+	lastframe_fb.cc[2].l = screen->format->Bshift;
+	lastframe_fb.ptr = vid_lastframe;
+	lastframe_fb.enabled = 1;
+	lastframe_fb.dirty = 0;
+
+	currframe_fb.w = 160; /* Gameboy native res - width */
+	currframe_fb.h = 144; /* Gameboy native res - height */
+	currframe_fb.pelsize = 2;
+	currframe_fb.pitch = 320;
+	currframe_fb.indexed = 0;
+	currframe_fb.cc[0].r = screen->format->Rloss;
+	currframe_fb.cc[0].l = screen->format->Rshift;
+	currframe_fb.cc[1].r = screen->format->Gloss;
+	currframe_fb.cc[1].l = screen->format->Gshift;
+	currframe_fb.cc[2].r = screen->format->Bloss;
+	currframe_fb.cc[2].l = screen->format->Bshift;
+	currframe_fb.ptr = vid_currframe;
+	currframe_fb.enabled = 1;
+	currframe_fb.dirty = 0;
 	
 	SDL_FreeSurface (bordersf);
 	vid_fb.first_paint = 1;	
@@ -551,6 +588,87 @@ void ohb_scale3x(){
 
 	un16 *dst = buffer[0];
 	un16 *src = (un16*)fb.ptr;
+	un16 *base = (un16*)vid_fb.ptr + 3880;
+	int x,y;
+
+	un16 A,B,C,D,E,F,G,H,I;
+
+	memset(buffer,0,480*3);
+
+	// Top-left
+	SCALE3X(0,1,0,160,dst[0],dst[0],dst[1],dst[0],dst[0],dst[1],dst[240],dst[240],dst[241]);
+	dst++, src++;
+	// Top
+	for(x=1; x<159; x+=2){
+		SCALE3X(-1,1,0,160,dst[0],dst[1],dst[1],dst[0],dst[1],dst[1],dst[240],dst[241],dst[241]);
+		dst+=2, src++;
+		SCALE3X(-1,1,0,160,dst[0],dst[0],dst[1],dst[0],dst[0],dst[1],dst[240],dst[240],dst[241]);
+		dst++, src++;
+	}
+	// Top-Right
+	SCALE3X(-1,0,0,160,dst[0],dst[1],dst[1],dst[0],dst[1],dst[1],dst[240],dst[241],dst[241]);
+	dst+=2, src++;
+
+	for(y=1; y<142; y+=2){
+		// left
+		SCALE3X(0,1,-160,160,dst[0],dst[0],dst[1],dst[240],dst[240],dst[241],dst[240],dst[240],dst[241]);
+		dst++, src++;
+		// middle
+		for(x=1; x<159; x+=2){
+			SCALE3X(-1,1,-160,160,dst[0],dst[1],dst[1],dst[240],dst[241],dst[241],dst[240],dst[241],dst[241]);
+			dst+=2, src++;
+			SCALE3X(-1,1,-160,160,dst[0],dst[0],dst[1],dst[240],dst[240],dst[241],dst[240],dst[240],dst[241]);
+			dst++, src++;
+		}
+		// right
+		SCALE3X(-1,0,-160,160,dst[0],dst[1],dst[1],dst[240],dst[241],dst[241],dst[240],dst[241],dst[241]);
+		dst+=2, src++;
+
+		memcpy(base,buffer[0],480);
+		memcpy(base+320,buffer[1],480);
+		memcpy(base+640,buffer[2],480);
+		dst=(un16*)buffer;
+		base += 960;
+
+		memset(buffer,0,480*3);
+		// left
+		SCALE3X(0,1,-160,160,dst[0],dst[0],dst[1],dst[0],dst[0],dst[1],dst[240],dst[240],dst[241]);
+		dst++, src++;
+		// middle
+		for(x=1; x<159; x+=2){
+			SCALE3X(-1,1,-160,160,dst[0],dst[1],dst[1],dst[0],dst[1],dst[1],dst[240],dst[241],dst[241]);
+			dst+=2, src++;
+			SCALE3X(-1,1,-160,160,dst[0],dst[0],dst[1],dst[0],dst[0],dst[1],dst[240],dst[240],dst[241]);
+			dst++, src++;
+		}
+		// right
+		SCALE3X(-1,0,-160,160,dst[0],dst[1],dst[1],dst[0],dst[1],dst[1],dst[240],dst[241],dst[241]);
+		dst+=2, src++;
+	}
+
+	// left
+	SCALE3X(0,1,-160,0,dst[0],dst[0],dst[1],dst[240],dst[240],dst[241],dst[240],dst[240],dst[241]);
+	dst++, src++;
+	// middle
+	for(x=1; x<159; x+=2){
+		SCALE3X(-1,1,-160,0,dst[0],dst[1],dst[1],dst[240],dst[241],dst[241],dst[240],dst[241],dst[241]);
+		dst+=2, src++;
+		SCALE3X(-1,1,-160,0,dst[0],dst[0],dst[1],dst[240],dst[240],dst[241],dst[240],dst[240],dst[241]);
+		dst++, src++;
+	}
+	// right
+	SCALE3X(-1,0,-160,0,dst[0],dst[1],dst[1],dst[240],dst[241],dst[241],dst[240],dst[241],dst[241]);
+	dst+=2, src++;
+
+	memcpy(base,buffer[0],480);
+	memcpy(base+320,buffer[1],480);
+	memcpy(base+640,buffer[2],480);
+}
+
+void blend_scale3x(){
+
+	un16 *dst = buffer[0];
+	un16 *src = (un16*)currframe_fb.ptr;
 	un16 *base = (un16*)vid_fb.ptr + 3880;
 	int x,y;
 
@@ -949,6 +1067,48 @@ void upscale_160x144_to_280x240_bilinearish(uint32_t* dst, uint32_t* src)
 
 /****************************************************************/
 
+void blend_frames(uint32_t* dst, uint32_t* src, uint32_t* srcb)
+{
+	uint16_t* Src16 = (uint16_t*) src;
+	uint16_t* Srcb16 = (uint16_t*) srcb;
+	uint16_t* Dst16 = (uint16_t*) dst;
+
+	uint32_t BlockX, BlockY;
+	uint16_t* BlockSrc;
+	uint16_t* BlockSrcb;
+	uint16_t* BlockDst;
+	for (BlockY = 0; BlockY < 144; BlockY++)
+	{
+		BlockSrc = Src16 + BlockY * 160 * 1;
+		BlockSrcb = Srcb16 + BlockY * 160 * 1;
+		BlockDst = Dst16 + BlockY * 160 * 1;
+		for (BlockX = 0; BlockX < 160; BlockX++)
+		{
+			uint16_t  _1 = *(BlockSrc);
+			uint16_t  _2 = *(BlockSrcb);
+			*(BlockDst) = Weight1_1(_1, _2);
+
+			BlockSrc += 1;
+			BlockSrcb += 1;
+			BlockDst += 1;
+		}
+	}
+}
+
+void store_lastframe(){
+	un16 *src = (un16 *) fb.ptr;
+	un16 *dst = (un16*) lastframe_fb.ptr;
+	int x=0, y=0;
+
+	for(y=0; y<144; y++){
+		memcpy(dst, src, 2*160);
+		src += 160;
+		dst += 160;
+	}
+}
+
+/****************************************************************/
+
 /*
 ** Assumes 16bpp.
 ** Assumes src pixels are in the same format as the dest pixels.
@@ -1051,6 +1211,120 @@ void ohb_scale_aspect(){
 	int x,y;
 
 	upscale_160x144_to_280x240_bilinearish((uint32_t *) dst, (uint32_t *) src);
+}
+
+/************************************************************/
+
+void blend_no_scale(){
+    /* No scaling */
+    /*
+    **  TODO add frame support :-)
+    **  Need a way to paint the first time (and after menu),
+    **  e.g. tie into dirty flag for physical fb (vid_fb.dirty)
+    */
+
+#define NO_SCALE_OFFSET 11600 + (320 * 11) /* (320 - 160) / 2)  + 240*((240 - 144) / 2) == 80 + 48 == middle('ish) of screen */
+    /* could make NO_SCALE_OFFSET a variable and count pixels until transparent is hit (or some other chroma-key color/colour) */
+	un16 *src = (un16 *) currframe_fb.ptr; /* NOTE this needs to be byte aligned! */
+	un16 *dst = (un16*) vid_fb.ptr + NO_SCALE_OFFSET;
+	int x=0, y=0;
+
+	for(y=0; y<144; y++){
+		memcpy(dst, src, 2*160);
+		src += 160;
+		dst += 320;
+	}
+}
+
+void blend_hardware_15x_scale(){
+    /* Hardware scaling */
+
+	un16 *src = (un16 *) currframe_fb.ptr;
+	un16 *dst = (un16*) vid_fb.ptr + 1688;
+	int x=0, y=0;
+
+	for(y=0; y<144; y++){
+		memcpy(dst, src, 2*160);
+		src += 160;
+		dst += 208;
+	}
+}
+
+void blend_hardware_1666x_scale(){
+    /* Hardware scaling */
+
+	un16 *src = (un16 *) currframe_fb.ptr;
+	un16 *dst = (un16*) vid_fb.ptr + 16;
+	int x=0, y=0;
+
+	for(y=0; y<144; y++){
+		memcpy(dst, src, 2*160);
+		src += 160;
+		dst += 192;
+	}
+}
+
+void blend_hardware_fullscreen_scale(){
+    /* Hardware scaling */
+
+	un16 *src = (un16 *) currframe_fb.ptr;
+	un16 *dst = (un16*) vid_fb.ptr + 0;
+	int x=0, y=0;
+
+	for(y=0; y<144; y++){
+		memcpy(dst, src, 2*160);
+		src += 160;
+		dst += 160;
+	}
+}
+
+/*
+** Assumes 16bpp. RGB565
+** Assumes src pixels are in the same format as the dest pixels.
+** Fast, full screen 320x240 (only), no aspect ratio preservation
+*/
+void blend_ayla_dingoo_scale(){
+    /* Full screen scaling (i.e. does NOT preserve aspect ratio) */
+
+	un16 *src = (un16 *) currframe_fb.ptr;
+	un16 *dst = (un16*)vid_fb.ptr /* + 3880 */;
+	int x,y;
+
+	gb_upscale((uint32_t *) dst, (uint32_t *) src);
+}
+
+void blend_ayla_scale15x(){
+    /* Ayla's 1.5x scaler */
+
+	un16 *src = (un16 *) currframe_fb.ptr;
+	un16 *dst = (un16*)vid_fb.ptr + 3880;
+	int x,y;
+
+	ayla_scale15x((uint32_t *) dst, (uint32_t *) src);
+}
+
+void blend_scale_aspect(){
+    /* bilinearish scaler */
+
+	un16 *src = (un16 *) currframe_fb.ptr;
+	un16 *dst = (un16*)vid_fb.ptr + 20;
+	int x,y;
+
+	upscale_160x144_to_280x240_bilinearish((uint32_t *) dst, (uint32_t *) src);
+}
+
+/************************************************************/
+
+void ohb_blend_frames(){
+    /* 1 frame ghosting */
+
+	un16 *src = (un16 *) fb.ptr;
+	un16 *srcb = (un16 *) lastframe_fb.ptr;
+	un16 *dst = (un16*) currframe_fb.ptr + 0;
+	int x,y;
+
+	blend_frames((uint32_t *) dst, (uint32_t *) src, (uint32_t *) srcb);
+	store_lastframe();
 }
 
 void scaler_init(int scaler_number){
@@ -1344,33 +1618,69 @@ void vid_end() {
 			vid_fb.dirty = 0;
 		}
 
+		if(blendframes){
+			ohb_blend_frames();
+		}
+
 		switch (upscaler){
 			case 1:
-				ohb_ayla_scale15x();
+				if(blendframes){
+					blend_ayla_scale15x();
+				} else {
+					ohb_ayla_scale15x();
+				}
 				break;
 			case 2:
-				ohb_scale3x();
+				if(blendframes){
+					blend_scale3x();
+				} else {
+					ohb_scale3x();
+				}
 				break;
 			case 3:
-				ohb_scale_aspect();
+				if(blendframes){
+					blend_scale_aspect();
+				} else {
+					ohb_scale_aspect();
+				}
 				break;
 			case 4:
-				ohb_ayla_dingoo_scale();
+				if(blendframes){
+					blend_ayla_dingoo_scale();
+				} else {
+					ohb_ayla_dingoo_scale();
+				}
 				break;
 #ifdef GCWZERO
 			case 5:
-				ohb_hardware_15x_scale();
+				if(blendframes){
+					blend_hardware_15x_scale();
+				} else {
+					ohb_hardware_15x_scale();
+				}
 				break;
 			case 6:
-				ohb_hardware_1666x_scale();
+				if(blendframes){
+					blend_hardware_1666x_scale();
+				} else {
+					ohb_hardware_1666x_scale();
+				}
 				break;
 			case 7:
-				ohb_hardware_fullscreen_scale();
+				if(blendframes){
+					blend_hardware_fullscreen_scale();
+				} else {
+					ohb_hardware_fullscreen_scale();
+				}
 				break;
 #endif
 			case 0:
 			default:
-				ohb_no_scale();
+				if(blendframes){
+					blend_no_scale();
+				} else {
+					ohb_no_scale();
+				}
 				break;
 		}
 

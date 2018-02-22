@@ -303,7 +303,11 @@ void vid_init() {
 	vid_fb.first_paint = 1;	
 
 	if (bmpenabled == 0){
+#ifdef OHBOY_USE_SDL_IMAGE
+		bordersf = IMG_Load("etc"DIRSEP"black.png");}
+#else
 		bordersf = SDL_LoadBMP("etc"DIRSEP"black.bmp");}
+#endif /*OHBOY_USE_SDL_IMAGE*/
 	else if (bmpenabled == 1)
 	{
 #ifdef OHBOY_USE_SDL_IMAGE
@@ -313,11 +317,19 @@ void vid_init() {
 		if (hw.cgb){bordersf = SDL_LoadBMP(gbcborder);}
 		if (!hw.cgb){bordersf = SDL_LoadBMP(border);}
 #endif /*OHBOY_USE_SDL_IMAGE*/
-		if ((upscaler == 3) || (upscaler == 4) || (upscaler == 7)) {bordersf = SDL_LoadBMP("etc"DIRSEP"black.bmp");}
+		if ((upscaler == 3) || (upscaler == 4) || (upscaler == 7)) {
+#ifdef OHBOY_USE_SDL_IMAGE
+			bordersf = IMG_Load("etc"DIRSEP"black.png");}
+#else
+			bordersf = SDL_LoadBMP("etc"DIRSEP"black.bmp");}
+#endif /*OHBOY_USE_SDL_IMAGE*/
 		#if defined(DINGOO_OPENDINGUX)
 		if (bordersf == NULL){                 /*Fix for flickering screen when borders are set to On but no border is loaded, and double buffer is used*/
-			bordersf = SDL_LoadBMP("etc"DIRSEP"black.bmp");
-		}
+#ifdef OHBOY_USE_SDL_IMAGE
+			bordersf = IMG_Load("etc"DIRSEP"black.png");}
+#else
+			bordersf = SDL_LoadBMP("etc"DIRSEP"black.bmp");}
+#endif /*OHBOY_USE_SDL_IMAGE*/
 		#endif /*DINGOO_OPENDINGUX*/
 	}
 }
@@ -352,7 +364,11 @@ void paint_menu_bg() {
 	#ifdef DINGOO_SIM
 		/* do nothing */
 	#else
+	#ifdef OHBOY_USE_SDL_IMAGE
+		tmp_surface = IMG_Load("etc"DIRSEP"launch.png");
+	#else
 		tmp_surface = SDL_LoadBMP("etc"DIRSEP"launch.bmp");
+	#endif /*OHBOY_USE_SDL_IMAGE*/
 
 		if (tmp_surface)
 		{

@@ -1604,7 +1604,7 @@ void VideoEnterGame() {
 
 void VideoExitGame() {
 #ifdef GCWZERO
-	screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_DOUBLEBUF);
+	screen = SDL_SetVideoMode(320, 240, 16, SDL_SWSURFACE);
 #endif
 }
 

@@ -1604,6 +1604,7 @@ void VideoEnterGame() {
 
 void VideoExitGame() {
 #ifdef GCWZERO
+	screen = SDL_SetVideoMode(160, 120, 16, SDL_HWSURFACE | SDL_DOUBLEBUF); // Force a different resolution before changing from SDL_HWSURFACE|SDL_DOUBLEBUF to SDL_SWSURFACE to avoid screen not updating bug.
 	screen = SDL_SetVideoMode(320, 240, 16, SDL_SWSURFACE);
 #endif
 }
